@@ -33,7 +33,7 @@ export default function AIAssistant() {
     {
       id: 1,
       role: "bot",
-      text: "Welcome to Plantifipia! 🌿 I am your personal botanist.",
+      text: "Welcome to Plantifipia! 🌿 I am your personal botanist. How can I help your garden grow today? I can help with plant identification, care tips, or diagnosing diseases.",
       isArabic: false
     }
   ]);
