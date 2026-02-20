@@ -1,0 +1,17 @@
+.landing-footer {
+  width: 100%;
+  padding: 40px 80px;
+  background: #111827;
+  color: white;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.landing-footer-links {
+  display: flex;
+  gap: 24px;
+  font-size: 14px;
+  opacity: .8;
+}

@@ -1,0 +1,106 @@
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background-color: #F8F9FA;
+  padding: 30px 20px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  border-right: 1px solid #E5E7EB;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; 
+}
+
+.logout-section {
+  margin-bottom: 20px;
+}
+
+.logout-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  border-radius: 13px;
+  cursor: pointer;
+  transition: 0.3s;
+  color: #DC2626;
+}
+
+.logout-item:hover {
+  background-color: #FEE2E2;
+}
+
+.logout-icon {
+  background-color: #FEE2E2;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sidebar-header img {
+  width: 130px;
+}
+
+.sidebar hr {
+  border: none;
+  height: 1px;
+  background-color: #E5E7EB;
+  margin: 15px 13px 32px 13px;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+}
+
+.menu li {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  border-radius: 13px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.menu li:hover {
+  background-color: #E6F7F5;
+}
+
+.active-item {
+  background-color: white;
+  font-weight: 600;
+  box-shadow: 0 8px 12px -4px rgba(0, 0, 0, 0.25);
+}
+
+.menu-icon {
+  width: 30px;
+  height: 30px;
+  background-color: white;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-icon img {
+  width: 22px;
+}
+
+.active-item .menu-icon {
+  background-color: #4FD1C5;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9CA3AF;
+  letter-spacing: 1px;
+  padding: 0 10px;
+  margin-bottom: 10px;
+}

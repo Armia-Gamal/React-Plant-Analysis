@@ -1,0 +1,36 @@
+html {
+  scroll-behavior: smooth;
+}
+
+.section {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  font-weight: bold;
+}
+
+.home { background: #f8f9fa; }
+.about { background: #e9ecef; }
+.features { background: #dee2e6; }
+.how { background: #ced4da; }
+.contact { background: #adb5bd; }
+
+.landing-footer {
+  width: 100%;
+  padding: 40px 80px;
+  background: #111827;
+  color: white;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.landing-footer-links {
+  display: flex;
+  gap: 24px;
+  font-size: 14px;
+  opacity: .8;
+}

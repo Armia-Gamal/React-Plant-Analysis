@@ -1,0 +1,22 @@
+:root {
+  --image-width: 85%;
+  --image-height: 100%;
+  --form-width: 330px;
+}
+
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* BODY */
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  background: #ffffff;
+  /* height: 100vh; */
+  display: flex;
+  flex-direction: column;
+  /* overflow: hidden; */
+}

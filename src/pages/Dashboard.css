@@ -1,0 +1,145 @@
+/* ================= Layout ================= */
+
+html, body {
+  overflow-x: hidden;
+}
+
+.main-content {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+}
+
+/* ================= Navbar Dash ================= */
+
+.navbar-dash {
+  position: fixed;
+  top: 0;
+  left: 250px;
+  right: 0;
+  height: 75px;
+  background-color: #F8F9FA;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  z-index: 100;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  color: #9CA3AF;
+}
+
+.breadcrumb-active {
+  color: #374151;
+  font-weight: 600;
+}
+
+/* ===== Progress Section ===== */
+
+.navbar-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.progress-steps {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.progress-dots {
+  display: flex;
+  align-items: center;
+}
+
+.dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all 0.4s ease;
+}
+
+/* Done */
+.dot-done {
+  background-color: #22C55E;
+}
+
+/* Active */
+.dot-active {
+  background-color: #53C8BF;
+  border: 3px solid #A7F3D0;
+}
+
+/* Gray */
+.dot-gray {
+  background-color: #D1D5DB;
+}
+
+/* الخط الأساسي */
+.dot-line {
+  width: 50px;
+  height: 2px;
+  background-color: #E5E7EB;
+  position: relative;
+  overflow: hidden;
+}
+
+.dot-line-fill {
+  height: 100%;
+  background-color: #22C55E;
+  transition: width 0.3s ease;
+}
+
+.dot-line-active {
+  background-color: #22C55E;
+}
+
+/* ===== Right Side ===== */
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.search-box {
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 8px 14px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.nav-icon {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.nav-icon:hover {
+  background: #53C8BF;
+  color: white;
+}
