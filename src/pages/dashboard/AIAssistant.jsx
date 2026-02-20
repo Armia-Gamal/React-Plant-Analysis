@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import "./AIAssistant.css";
 
 marked.setOptions({ breaks: true });
 
 export default function AIAssistant() {
 
-  const apiKey = import.meta.env.VITE_COHERE_API_KEY;
+  const functions = getFunctions();
+  const cohereChat = httpsCallable(functions, "cohereChat");
 
   const SYSTEM_PREAMBLE = `
   You are Plantifipia, an expert botanist, horticulturist, and plant pathologist.
@@ -18,14 +20,13 @@ export default function AIAssistant() {
   4. Provide gardening tips and best practices.
   
   STRICT DOMAIN RULES:
-  - You must ONLY answer questions related to plants, gardening, farming, botany, soil science, or nature conservation.
-  - If a user asks about any other topic (e.g., coding, politics, movies, history, cooking non-plant food, math), you must POLITELY REFUSE.
-  - Refusal message example: "I apologize, but my roots are firmly planted in botany. I can only answer questions about plants and gardening."
+  - Only answer plant-related questions.
+  - Politely refuse other topics.
   
   TONE:
   - Earthy, nurturing, scientific but accessible.
-  - Use plant metaphors where appropriate (e.g., "Let's dig into this," "Growth takes time").
-  - Be encouraging and supportive.
+  - Use plant metaphors.
+  - Be encouraging.
   `;
 
   const [messages, setMessages] = useState([
@@ -55,9 +56,7 @@ export default function AIAssistant() {
 
   useEffect(() => {
     const footer = document.querySelector(".footer");
-    if (footer) {
-      footer.style.display = "none";
-    }
+    if (footer) footer.style.display = "none";
     return () => {
       if (footer) footer.style.display = "";
     };
@@ -84,37 +83,29 @@ export default function AIAssistant() {
     setLoading(true);
 
     try {
-      const response = await fetch("https://api.cohere.ai/v1/chat", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: input,
-          preamble: SYSTEM_PREAMBLE,
-          chat_history: messages.map(m => ({
-            role: m.role === "user" ? "USER" : "CHATBOT",
-            message: m.text
-          })),
-          temperature: 0.3
-        })
+      const result = await cohereChat({
+        message: input,
+        preamble: SYSTEM_PREAMBLE,
+        chat_history: messages.map(m => ({
+          role: m.role === "user" ? "USER" : "CHATBOT",
+          message: m.text
+        })),
+        temperature: 0.3
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error();
-
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: "bot",
-        text: data.text
+        text: result.data.text
       }]);
 
-    } catch {
+    } catch (err) {
+      console.error(err);
+
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: "bot",
-        text: "Connection withered. Check API key."
+        text: "🌱 The roots are tangled... please try again."
       }]);
     }
 
@@ -135,7 +126,9 @@ export default function AIAssistant() {
 
         {messages.map(msg => {
           const arabic = msg.isArabic !== undefined ? msg.isArabic : isArabic(msg.text);
-          const alignment = msg.role === "user" ? "flex-end" : (arabic ? "rtl-align" : "ltr-align");
+          const alignment = msg.role === "user"
+            ? "flex-end"
+            : (arabic ? "rtl-align" : "ltr-align");
 
           return (
             <div key={msg.id} className={`chat-row ${alignment}`}>
@@ -173,7 +166,6 @@ export default function AIAssistant() {
         })()}
 
         <div ref={messagesEndRef} />
-
       </div>
 
       <div className="chat-input-area">
