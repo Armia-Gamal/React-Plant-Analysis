@@ -61,6 +61,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden; /* 🔥 مهم */
+}
+
+.image-box img {
+    width: 100%;
+    height: 100%;       /* بدل auto */
+    object-fit: contain;  /* يخليها جوه البوكس دايماً */
+    border-radius: 15px;
 }
 
 .upload-text {
@@ -68,6 +76,12 @@
     text-align: center;
     flex: 1;
     position: relative;
+}
+
+.drag-active {
+    border: 2px dashed #22C55E;
+    background-color: #ECFDF5;
+    transition: 0.3s;
 }
 
 .upload-text.no-margin {
@@ -88,11 +102,11 @@
 }
 
 
-.image-box img {
+/* .image-box img {
     width: 100%;
     height: auto;
     border-radius: 15px;
-}
+} */
 
 
 .upload-text h2 {
@@ -360,7 +374,7 @@
 .classification-image-box img {
     width: 100%;    
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 10px;
 }
 
@@ -422,6 +436,34 @@
   transition: width 0.5s ease;
 }
 
+.scroll-classification {
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.classification-item {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.arrow-controls{
+  margin-right:30px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:14px;
+  font-weight:600;
+}
+
+.arrow-controls button{
+  background:#22C55E;
+  border:none;
+  color:white;
+  border-radius:6px;
+  padding:1px 4px;
+  cursor:pointer;
+}
 /* ================= Completed Badge ================= */
 
 .completed-badge {
