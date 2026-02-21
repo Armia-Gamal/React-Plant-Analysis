@@ -325,9 +325,13 @@ export default function PlantAnalysis({ setStep, setProgressValue }) {
           </div>
 
           <div className="classification-content">
-
+            
             <div className="classification-image-box">
-              <img src={current.image} alt="Classified" />
+              <img
+                src={current.image}
+                alt="Classified"
+                className={current.image === classImg ? "" : "uploaded-image"}
+              />
             </div>
 
             <div className="classification-info">

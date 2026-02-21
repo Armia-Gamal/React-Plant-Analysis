@@ -378,6 +378,10 @@
     border-radius: 10px;
 }
 
+.classification-image-box img.uploaded-image {
+    object-fit: contain;
+}
+
 .classification-info {
     display: flex;
     flex-direction: column;
