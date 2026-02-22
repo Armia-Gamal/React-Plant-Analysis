@@ -27,18 +27,32 @@ export default function Navbar() {
       </div>
 
       <ul className="nav-links">
-        <li onClick={() => scrollToSection("home")}>Home</li>
-        <li onClick={() => scrollToSection("about")}>About</li>
-        <li onClick={() => scrollToSection("features")}>Features</li>
-        <li onClick={() => scrollToSection("how")}>How It Works</li>
-        <li onClick={() => scrollToSection("contact")}>Contact</li>
+        <li onClick={() => scrollToSection("home")}>
+          <i className="fa-solid fa-house"></i> Home
+        </li>
+
+        <li onClick={() => scrollToSection("about")}>
+          <i className="fa-solid fa-circle-info"></i> About
+        </li>
+
+        <li onClick={() => scrollToSection("features")}>
+          <i className="fa-solid fa-star"></i> Features
+        </li>
+
+        <li onClick={() => scrollToSection("how")}>
+          <i className="fa-solid fa-gears"></i> How It Works
+        </li>
+
+        <li onClick={() => scrollToSection("contact")}>
+          <i className="fa-solid fa-envelope"></i> Contact
+        </li>
       </ul>
 
       <button
         className="nav-btn"
         onClick={() => navigate("/login")}
       >
-        Get Started
+        <i className="fa-solid fa-rocket"></i> Get Started
       </button>
     </nav>
   );
