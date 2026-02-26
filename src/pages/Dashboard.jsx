@@ -12,8 +12,8 @@ export default function Dashboard() {
 
   // 0 Upload
   // 1 Detect
-  // 2 Classify
-  // 3 Segment
+  // 2 Segment
+  // 3 Classify
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
 
@@ -71,9 +71,9 @@ export default function Dashboard() {
                 <span>→</span>
                 <span>Detect</span>
                 <span>→</span>
-                <span>Classify</span>
-                <span>→</span>
                 <span>Segment</span>
+                <span>→</span>
+                <span>Classify</span>
               </div>
 
               <div className="progress-dots">
@@ -100,14 +100,14 @@ export default function Dashboard() {
 
                 <div className={`dot-line ${step > 1 ? "dot-line-active" : ""}`}></div>
 
-                {/* Classify */}
+                {/* Segment */}
                 <span className={`dot ${isDone(2) ? "dot-done" : isActive(2) ? "dot-active" : "dot-gray"}`}>
                   {isDone(2) && "✓"}
                 </span>
 
                 <div className={`dot-line ${step > 2 ? "dot-line-active" : ""}`}></div>
 
-                {/* Segment */}
+                {/* Classify */}
                 <span className={`dot ${isDone(3) ? "dot-done" : isActive(3) ? "dot-active" : "dot-gray"}`}>
                   {isDone(3) && "✓"}
                 </span>
