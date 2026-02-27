@@ -82,111 +82,67 @@ export default function PlantAnalysis({ setStep, setProgressValue, onSendReport 
 
   // Generate AI prompt for single disease (Markdown format)
   const generateAIPrompt = (leafData) => {
-    return `
-# 🌿 AI Plant Disease Smart Report
-
-You are a professional plant pathology expert specialized in diagnosing and treating crop and fruit tree diseases.
-
----
-
-## 📌 Case Information
-
+    const diseaseSummary = `
+### 🌿 Disease #1
 - **Plant Name:** ${leafData.plant_name}
-- **Health Status:** Diseased
 - **Disease Name:** ${leafData.disease_name}
 - **Infection Area:** ${leafData.disease_percentage}%
 - **Severity Level:** ${leafData.severity}
+`;
+
+    return `
+# 🌱 Comprehensive Plant Health Smart Report
+
+You are a professional plant pathology expert. Below is a disease analysis request based on AI-detected plant conditions.
 
 ---
+
+## 📋 Report Header
+| Field | Value |
+|-------|-------|
+| Total Diseases Detected | 1 |
+| Analysis Date | ${new Date().toLocaleDateString()} |
+| Report Type | Single Disease Analysis |
+
+---
+${diseaseSummary}
+---
+
+# 📊 Required Analysis Structure
+Provide a fully structured scientific report using the following sections:
 
 ## 1️⃣ Disease Overview
+- What is the disease? Pathogen type? Biological impact?
 
-Provide a clear explanation of:
+## 2️⃣ Causes & Risk Factors
+🌦 Environment, 🌱 Soil, 💧 Irrigation, 🌿 Fertilization, 🛡 Immunity, 🔄 Transmission.
 
-- What is **${leafData.disease_name}** in ${leafData.plant_name}?
-- What type of pathogen causes it? (Fungus, Bacteria, Virus, etc.)
-- How does it biologically affect the plant tissues?
+## 3️⃣ Infection Percentage Analysis
+- Practical meaning of the detected percentage and control possibility.
 
----
-
-## 2️⃣ Causes of the Disease
-
-Explain the possible causes including:
-
-- 🌦 Environmental factors (humidity, temperature, rainfall, poor ventilation)
-- 🌱 Soil-related issues
-- 💧 Irrigation mistakes
-- 🌿 Fertilization imbalance
-- 🛡 Plant immunity weakness
-- 🔄 Infection spread mechanisms
-
----
-
-## 3️⃣ Infection Percentage Analysis (${leafData.disease_percentage}%)
-
-- Is this infection level considered low, moderate, or high?
-- What does ${leafData.disease_percentage}% infection practically mean?
-- Can the disease still be controlled at this stage?
-- Expected progression if untreated
-
----
-
-## 4️⃣ Severity Level Assessment (${leafData.severity})
-
-- What does "${leafData.severity}" severity indicate?
-- Biological impact at this stage
-- Risk level if no intervention is applied
-
----
+## 4️⃣ Severity Level Assessment
+- Biological/Economic risk and consequences of non-treatment.
 
 ## 5️⃣ Step-by-Step Treatment Plan
-
-Provide a structured treatment plan including:
-
-### 🚑 Immediate Actions
-- First emergency steps
-
-### ✂️ Pruning Strategy
-- How to safely remove infected parts
-
-### 🧪 Treatment Recommendations
-- Recommended active ingredients (not only brand names)
-- Fungicides / bactericides if applicable
-
-### 📅 Application Schedule
-- Spray intervals
-- Duration of treatment
-
-### 🛡 Post-Treatment Protection
-- Prevent reinfection
-
----
+🚑 Immediate Actions | ✂️ Pruning | 🧪 Recommended Active Ingredients | 📅 Schedule | 🛡 Protection.
 
 ## 6️⃣ Long-Term Prevention Strategy
-
-- 🌬 Improve air circulation
-- 📏 Proper plant spacing
-- 💦 Optimized irrigation practices
-- 🌾 Balanced fertilization program
-- 🧼 Tool sterilization procedures
-- 🧑‍🌾 Seasonal monitoring plan
-
----
+🌬 Ventilation, 📏 Spacing, 💦 Irrigation, 🌾 Fertilization, 🧼 Sanitation.
 
 ## 7️⃣ Warning Signs & Escalation
-
-- Symptoms indicating disease worsening
-- When immediate professional agricultural consultation is required
+- Symptoms indicating worsening and when professional consultation is needed.
 
 ---
 
-# ✅ Response Instructions
+# 📈 Final Summary & Recommendations
+After completing the disease analysis above, provide:
+- **Overall Plant Health Score** (0-100%)
+- **Priority Actions** (ranked list of most urgent treatments)
+- **Expected Recovery Timeline** (estimated time to recovery with proper treatment)
+- **Key Takeaways** (3-5 bullet points summarizing the most critical findings)
 
-- Use clear headings and bullet points.
-- Keep the explanation scientifically accurate.
-- Make it understandable for farmers and non-experts.
-- Avoid overly complex academic terminology.
-- Keep the structure clean and organized in Markdown format.
+# ✅ Formatting Rules
+- Use Markdown, bullet points, and keep it scientific yet clear.
 `;
   };
 
@@ -199,117 +155,180 @@ Provide a structured treatment plan including:
         leaf.severity !== "Not Severity Yet"
     );
 
+    // If more than 5 diseases, split into batches of 3
+    if (diseasedLeaves.length > 5) {
+      const batches = [];
+      const totalBatches = Math.ceil(diseasedLeaves.length / 3);
+      
+      // Calculate severity counts for header
+      const severityCounts = diseasedLeaves.reduce((acc, leaf) => {
+        acc[leaf.severity] = (acc[leaf.severity] || 0) + 1;
+        return acc;
+      }, {});
+      const severitySummary = Object.entries(severityCounts).map(([k,v]) => `${k}: ${v}`).join(", ");
+
+      for (let i = 0; i < diseasedLeaves.length; i += 3) {
+        const batch = diseasedLeaves.slice(i, i + 3);
+        const batchNum = Math.floor(i/3) + 1;
+        const isFirstBatch = batchNum === 1;
+        const isLastBatch = batchNum === totalBatches;
+        
+        const diseasesList = batch
+          .map(
+            (leaf, idx) => `
+### 🌿 Disease #${i + idx + 1}
+- **Plant Name:** ${leaf.plant_name}
+- **Disease Name:** ${leaf.disease_name}
+- **Infection Area:** ${leaf.disease_percentage}%
+- **Severity Level:** ${leaf.severity}
+`
+          )
+          .join("\n---\n");
+
+        // Header only for first batch
+        const headerSection = isFirstBatch ? `
+## 📋 Report Header
+| Field | Value |
+|-------|-------|
+| Total Diseases Detected | ${diseasedLeaves.length} |
+| Severity Distribution | ${severitySummary} |
+| Analysis Date | ${new Date().toLocaleDateString()} |
+| Report Type | Multi-Disease Analysis |
+
+---
+` : '';
+
+        // Summary footer only for last batch
+        const footerSection = isLastBatch ? `
+---
+
+# 📈 Final Summary & Recommendations
+After analyzing ALL ${diseasedLeaves.length} diseases, provide a comprehensive conclusion:
+- **Overall Plant Health Score** (0-100%)
+- **Most Critical Disease** (which disease needs immediate attention)
+- **Priority Treatment Order** (ranked list from most to least urgent)
+- **Estimated Recovery Timeline** (expected time to full recovery)
+- **Integrated Management Plan** (how to treat multiple diseases together efficiently)
+- **Key Takeaways** (5 bullet points summarizing the most critical findings for all diseases)
+` : '';
+
+        batches.push(`
+# 🌱 Comprehensive Plant Health Smart Report
+
+You are a professional plant pathology expert. Analyze these diseases:
+${headerSection}
+---
+${diseasesList}
+---
+
+# 📊 Required Analysis Structure
+For *each disease listed above*, provide a fully structured scientific report using the following sections:
+
+## 1️⃣ Disease Overview
+- What is the disease? Pathogen type? Biological impact?
+
+## 2️⃣ Causes & Risk Factors
+🌦 Environment, 🌱 Soil, 💧 Irrigation, 🌿 Fertilization, 🛡 Immunity, 🔄 Transmission.
+
+## 3️⃣ Infection Percentage Analysis
+- Practical meaning of the detected percentage and control possibility.
+
+## 4️⃣ Severity Level Assessment
+- Biological/Economic risk and consequences of non-treatment.
+
+## 5️⃣ Step-by-Step Treatment Plan
+🚑 Immediate Actions | ✂️ Pruning | 🧪 Recommended Active Ingredients | 📅 Schedule | 🛡 Protection.
+
+## 6️⃣ Long-Term Prevention Strategy
+🌬 Ventilation, 📏 Spacing, 💦 Irrigation, 🌾 Fertilization, 🧼 Sanitation.
+
+## 7️⃣ Warning Signs & Escalation
+- Symptoms indicating worsening and when professional consultation is needed.
+${footerSection}
+# ✅ Formatting Rules
+- Use Markdown, bullet points, and keep it scientific yet clear.
+`);
+      }
+      return { isBatch: true, prompts: batches };
+    }
+
+    // For 5 or fewer, use single prompt
     const diseasesList = diseasedLeaves
       .map(
         (leaf, idx) => `
-  ### 🌿 Disease #${idx + 1}
-
-  - **Plant Name:** ${leaf.plant_name}
-  - **Disease Name:** ${leaf.disease_name}
-  - **Infection Area:** ${leaf.disease_percentage}%
-  - **Severity Level:** ${leaf.severity}
-  `
+### 🌿 Disease #${idx + 1}
+- **Plant Name:** ${leaf.plant_name}
+- **Disease Name:** ${leaf.disease_name}
+- **Infection Area:** ${leaf.disease_percentage}%
+- **Severity Level:** ${leaf.severity}
+`
       )
       .join("\n---\n");
 
+    // Calculate severity counts for header
+    const severityCounts = diseasedLeaves.reduce((acc, leaf) => {
+      acc[leaf.severity] = (acc[leaf.severity] || 0) + 1;
+      return acc;
+    }, {});
+    const severitySummary = Object.entries(severityCounts).map(([k,v]) => `${k}: ${v}`).join(", ");
+
     return `
-  # 🌱 Comprehensive Plant Health Smart Report
+# 🌱 Comprehensive Plant Health Smart Report
 
-  You are a professional plant pathology expert specialized in diagnosing and treating crop and fruit diseases.
+You are a professional plant pathology expert. Below is a multi-disease analysis request based on AI-detected plant conditions.
 
-  Below is a multi-disease analysis request based on AI-detected plant conditions.
+---
 
-  ---
+## 📋 Report Header
+| Field | Value |
+|-------|-------|
+| Total Diseases Detected | ${diseasedLeaves.length} |
+| Severity Distribution | ${severitySummary} |
+| Analysis Date | ${new Date().toLocaleDateString()} |
+| Report Type | Multi-Disease Analysis |
 
-  ${diseasesList}
+---
+${diseasesList}
+---
 
-  ---
+# 📊 Required Analysis Structure
+For *each disease listed above*, provide a fully structured scientific report using the following sections:
 
-  # 📊 Required Analysis Structure
+## 1️⃣ Disease Overview
+- What is the disease? Pathogen type? Biological impact?
 
-  For **each disease listed above**, provide a fully structured scientific report using the following sections:
+## 2️⃣ Causes & Risk Factors
+🌦 Environment, 🌱 Soil, 💧 Irrigation, 🌿 Fertilization, 🛡 Immunity, 🔄 Transmission.
 
-  ---
+## 3️⃣ Infection Percentage Analysis
+- Practical meaning of the detected percentage and control possibility.
 
-  ## 1️⃣ Disease Overview
+## 4️⃣ Severity Level Assessment
+- Biological/Economic risk and consequences of non-treatment.
 
-  - What is the disease?
-  - What pathogen type causes it? (Fungus, Bacteria, Virus, etc.)
-  - How does it biologically impact the plant?
+## 5️⃣ Step-by-Step Treatment Plan
+🚑 Immediate Actions | ✂️ Pruning | 🧪 Recommended Active Ingredients | 📅 Schedule | 🛡 Protection.
 
-  ---
+## 6️⃣ Long-Term Prevention Strategy
+🌬 Ventilation, 📏 Spacing, 💦 Irrigation, 🌾 Fertilization, 🧼 Sanitation.
 
-  ## 2️⃣ Causes & Risk Factors
+## 7️⃣ Warning Signs & Escalation
+- Symptoms indicating worsening and when professional consultation is needed.
 
-  Explain possible causes including:
+---
 
-  - 🌦 Environmental conditions (humidity, temperature, rainfall, airflow)
-  - 🌱 Soil-related problems
-  - 💧 Irrigation mismanagement
-  - 🌿 Fertilization imbalance
-  - 🛡 Weak plant immunity
-  - 🔄 Disease transmission mechanisms
+# 📈 Final Summary & Recommendations
+After analyzing ALL diseases above, provide a comprehensive conclusion:
+- **Overall Plant Health Score** (0-100%)
+- **Most Critical Disease** (which disease needs immediate attention)
+- **Priority Treatment Order** (ranked list from most to least urgent)
+- **Estimated Recovery Timeline** (expected time to full recovery)
+- **Integrated Management Plan** (how to treat multiple diseases together efficiently)
+- **Key Takeaways** (5 bullet points summarizing the most critical findings for all diseases)
 
-  ---
-
-  ## 3️⃣ Infection Percentage Analysis
-
-  - Is the infection percentage considered mild, moderate, or severe?
-  - What does this percentage practically mean for crop productivity?
-  - Can the condition still be controlled at this stage?
-
-  ---
-
-  ## 4️⃣ Severity Level Assessment
-
-  - What does the severity classification indicate?
-  - Biological and economic risk level
-  - What happens if no treatment is applied?
-
-  ---
-
-  ## 5️⃣ Step-by-Step Treatment Plan
-
-  Provide a clear structured treatment protocol including:
-
-  ### 🚑 Immediate Actions
-  ### ✂️ Pruning & Isolation
-  ### 🧪 Recommended Active Ingredients
-  ### 📅 Spray Frequency & Duration
-  ### 🛡 Post-Treatment Protection
-
-  ---
-
-  ## 6️⃣ Long-Term Prevention Strategy
-
-  - 🌬 Improve ventilation
-  - 📏 Optimal plant spacing
-  - 💦 Irrigation best practices
-  - 🌾 Balanced fertilization
-  - 🧼 Tool sanitation
-  - 📆 Seasonal monitoring
-
-  ---
-
-  ## 7️⃣ Farm-Level Summary
-
-  At the end, provide:
-
-  - 📈 Overall farm health assessment
-  - ⚠ Most critical disease among the listed cases
-  - 🧠 Recommended priority order of treatment
-
-  ---
-
-  # ✅ Formatting Rules
-
-  - Use clear Markdown headings.
-  - Separate each disease with horizontal lines.
-  - Use bullet points.
-  - Keep explanations scientifically accurate but farmer-friendly.
-  - Avoid overly complex academic terminology.
-  - Keep formatting clean and structured.
-  `;
+# ✅ Formatting Rules
+- Use Markdown, bullet points, and keep it scientific yet clear.
+`;
   };
 
   const handleGenerateReport = () => {
@@ -323,7 +342,7 @@ Provide a structured treatment plan including:
     if (leafData === "all") {
       prompt = generateAllDiseasesPrompt();
     } else {
-      prompt = generateAIPrompt(leafData);
+      prompt = generateAllDiseasesPrompt(leafData);
     }
     
     if (onSendReport) {
@@ -551,10 +570,8 @@ Provide a structured treatment plan including:
     img.src = URL.createObjectURL(file);
     await new Promise(resolve => img.onload = resolve);
 
-    const results = [];
-
-    // process each box: build crop blob then call classify, classify-cam and segment
-    for (let box of boxes) {
+    // Create all crop blobs first
+    const cropData = await Promise.all(boxes.map(async (box) => {
       const width = box.x2 - box.x1;
       const height = box.y2 - box.y1;
 
@@ -579,6 +596,11 @@ Provide a structured treatment plan including:
         canvas.toBlob(resolve, "image/jpeg", 1.0)
       );
 
+      return { blob, canvas };
+    }));
+
+    // Process all boxes in parallel
+    const results = await Promise.all(cropData.map(async ({ blob, canvas }) => {
       // prepare requests in parallel for speed
       const camPromise = (async () => {
         try {
@@ -619,12 +641,11 @@ Provide a structured treatment plan including:
       const diseasePercentRaw = (camData && typeof camData.disease_percentage === 'number') ? camData.disease_percentage : 0;
       const severityName = (camData && camData.severity) || "Not Determined";
 
-      const entry = {
+      return {
         image: camData && camData.image_base64 ? "data:image/jpeg;base64," + camData.image_base64 : canvas.toDataURL(),
         disease: plantName,
         category: diseaseName,
         confidence: confidenceRaw ? (confidenceRaw * 100).toFixed(2) : 0,
-        // API already returns disease percentage in percent units — don't multiply by 100
         diseasePercentage: diseasePercentRaw ? Number(diseasePercentRaw).toFixed(2) : 0,
         severity: severityName,
         camImage: camData && camData.image_base64 ? "data:image/jpeg;base64," + camData.image_base64 : null,
@@ -635,9 +656,7 @@ Provide a structured treatment plan including:
           leaf_pixel_count: sData && sData.leaf_pixel_count ? sData.leaf_pixel_count : 0,
         }
       };
-
-      results.push(entry);
-    }
+    }));
 
     setClassifications(results);
     setCurrentIndex(0);
@@ -883,7 +902,7 @@ Provide a structured treatment plan including:
         <div className="report-modal-overlay" onClick={() => setShowReportModal(false)}>
           <div className="report-modal" onClick={(e) => e.stopPropagation()}>
             <div className="report-modal-header">
-              <h2>Disease Analysis Report</h2>
+              <h2 title={`Health: ${reportData.leaves.length > 0 ? Math.round((reportData.leaves.filter(l => l.severity === "Healthy").length / reportData.leaves.length) * 100) : 0}%`}>Disease Analysis Report</h2>
               <button 
                 className="report-close-btn"
                 onClick={() => setShowReportModal(false)}
@@ -912,9 +931,10 @@ Provide a structured treatment plan including:
                           const rect = e.currentTarget.getBoundingClientRect();
                           const x = e.clientX - rect.left - rect.width/2;
                           const y = e.clientY - rect.top - rect.height/2;
-                          const angle = Math.atan2(y, x) * (180/Math.PI) + 180; // 0-360
+                          // Calculate angle from top (12 o'clock), clockwise, to match CSS conic-gradient
+                          const angle = (Math.atan2(x, -y) * 180 / Math.PI + 360) % 360;
                           const threshold = (diseasedPct/100) * 360;
-                          if (angle <= threshold) {
+                          if (angle < threshold) {
                             setHoveredSegment(`Diseased ${diseasedPct}%`);
                           } else {
                             setHoveredSegment(`Healthy ${healthyPct}%`);

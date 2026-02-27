@@ -365,3 +365,19 @@ html, body {
   background-color: #F3F4F6;
   color: #1F2937;
 }
+
+/* ===== Typing Cursor ===== */
+.typing-cursor {
+  display: inline-block;
+  color: #4FD1C5;
+  font-weight: bold;
+  font-size: 18px;
+  animation: blink 0.7s infinite;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}

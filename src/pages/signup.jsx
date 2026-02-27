@@ -21,7 +21,7 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    document.title = "Sign Up | Nabta Seniors";
+    document.title = "Sign Up | Nabta-System";
   }, []);
 
   const sendEmail = httpsCallable(functions, "sendWelcomeEmail");

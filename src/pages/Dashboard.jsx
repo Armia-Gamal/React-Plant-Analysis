@@ -21,7 +21,7 @@ export default function Dashboard() {
   const [newChatTrigger, setNewChatTrigger] = useState(0);
 
   useEffect(() => {
-    document.title = "Dashboard | Nabta Seniors";
+    document.title = "Dashboard | Nabta-System";
   }, []);
 
   const handleSendReport = (prompt, isHidden = false) => {

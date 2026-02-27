@@ -1,5 +1,6 @@
+import { useNavigate } from "react-router-dom";
 import "./Sidebar.css";
-import logo from "../assets/images/Logo.png";
+import logo from "../assets/images/Logo.svg";
 import plantIcon from "../assets/images/plant-icon.png";
 import plantIconActive from "../assets/images/plant-icon-active.png";
 import aiIconInactive from "../assets/images/hubot-svgrepo-com.svg";
@@ -13,12 +14,12 @@ import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 
 export default function Sidebar({ activePage, setActivePage }) {
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-
-      window.location.href = "/login";
+      navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
     }

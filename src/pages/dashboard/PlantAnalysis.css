@@ -466,7 +466,7 @@
   /* margin-right:30px; */
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:2px;
   font-size:14px;
   font-weight:600;
 }
@@ -475,7 +475,7 @@
   background:#22C55E;
   border:none;
   color:white;
-  border-radius:6px;
+  border-radius:20px;
   padding:1px 4px;
   cursor:pointer;
 }

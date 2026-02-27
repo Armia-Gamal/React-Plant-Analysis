@@ -25,15 +25,15 @@ export default function ProtectedRoute({ children }) {
   }
 
   // مش مسجل دخول
-  if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location }}
-      />
-    );
-  }
+    if (!user) {
+      return (
+        <Navigate
+          to="/login"
+          replace
+          state={{ from: location, notAccess: true }}
+        />
+      );
+    }
 
   // مسجل دخول
   return children;

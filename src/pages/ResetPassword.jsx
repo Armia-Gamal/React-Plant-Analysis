@@ -12,7 +12,7 @@ export default function ResetPassword() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    document.title = "Reset-Password | Nabta Seniors";
+    document.title = "Reset-Password | Nabta-System";
   }, []);
 
   const handleReset = async () => {

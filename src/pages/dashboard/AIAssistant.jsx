@@ -5,7 +5,7 @@ import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 import htmlToPdfmake from "html-to-pdfmake";import "./AIAssistant.css";
 pdfMake.vfs = pdfFonts.vfs;
-import nabtaLogo from "../../assets/images/Logo.png";
+import nabtaLogo from "../../assets/images/New Project (1).png";
 
 marked.setOptions({ breaks: true });
 
@@ -57,6 +57,11 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isReportLoading, setIsReportLoading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [typingMessageId, setTypingMessageId] = useState(null);
+  const [typedText, setTypedText] = useState("");
 
   const textareaRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -71,55 +76,75 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
   // create a professional PDF from markdown report
   const downloadPdf = async (markdownText) => {
 
-    const cleaned = markdownText
+  const cleaned = markdownText
 
-      /* ===============================
-        1️⃣ Replace Section Emojis
-      =============================== */
+    /* ======================================
+      1️⃣ Replace Section Emojis With Text
+    ====================================== */
 
-      .replace(/🌿/g, "")
-      .replace(/🌱/g, "")
-      .replace(/📌/g, "")
-      .replace(/📊/g, "")
-      .replace(/📈/g, "")
-      .replace(/⚠/g, "")
-      .replace(/🧠/g, "")
-      .replace(/🚑/g, "Immediate Actions")
-      .replace(/✂️/g, "Pruning")
-      .replace(/🧪/g, "Treatment")
-      .replace(/📅/g, "Schedule")
-      .replace(/🛡/g, "Protection")
-      .replace(/🌦/g, "Environmental")
-      .replace(/🌬/g, "Ventilation")
-      .replace(/📏/g, "Spacing")
-      .replace(/💦/g, "Irrigation")
-      .replace(/🌾/g, "Fertilization")
-      .replace(/🧼/g, "Sanitation")
-      .replace(/🧑‍🌾/g, "Monitoring")
-      .replace(/🔄/g, "Spread")
+    .replace(/🌿/g, "")
+    .replace(/🌱/g, "")
+    .replace(/📊/g, "")
+    .replace(/📈/g, "")
+    .replace(/📋/g, "")
+    .replace(/📌/g, "")
+    .replace(/⚠️?/g, "")
+    .replace(/🧠/g, "")
 
-      /* ===============================
-        2️⃣ Replace Number Emojis
-      =============================== */
+    // Treatment & Action Icons
+    .replace(/🚑/g, "Immediate Actions")
+    .replace(/✂️?/g, "Pruning")
+    .replace(/🧪/g, "Recommended Treatment")
+    .replace(/📅/g, "Treatment Schedule")
+    .replace(/🛡️?/g, "Protection Measures")
 
-      .replace(/1️⃣/g, "1.")
-      .replace(/2️⃣/g, "2.")
-      .replace(/3️⃣/g, "3.")
-      .replace(/4️⃣/g, "4.")
-      .replace(/5️⃣/g, "5.")
-      .replace(/6️⃣/g, "6.")
-      .replace(/7️⃣/g, "7.")
-      .replace(/8️⃣/g, "8.")
-      .replace(/9️⃣/g, "9.")
-      .replace(/🔟/g, "10.")
+    // Prevention Icons
+    .replace(/🌦️?/g, "Environmental Factors")
+    .replace(/🌬️?/g, "Ventilation")
+    .replace(/📏/g, "Proper Spacing")
+    .replace(/💦/g, "Irrigation Management")
+    .replace(/🌾/g, "Fertilization Strategy")
+    .replace(/🧼/g, "Sanitation Practices")
+    .replace(/🧑‍🌾/g, "Monitoring Plan")
+    .replace(/🔄/g, "Disease Spread")
 
-      .replace(/\*\*\s+Overall/g, "**Overall")
-      .replace(/\*\*\s+Most/g, "**Most")
-      .replace(/\*\*\s+Recommended/g, "**Recommended")
-      .replace(/[\uFE0F\u20E3]/g, "")      
-      .replace(/[\u200B-\u200D\uFEFF]/g, "") 
-      .replace(/[\uE000-\uF8FF]/g, "");   
-        
+    /* ======================================
+      2️⃣ Replace Number Emojis
+    ====================================== */
+
+    .replace(/1️⃣/g, "1.")
+    .replace(/2️⃣/g, "2.")
+    .replace(/3️⃣/g, "3.")
+    .replace(/4️⃣/g, "4.")
+    .replace(/5️⃣/g, "5.")
+    .replace(/6️⃣/g, "6.")
+    .replace(/7️⃣/g, "7.")
+    .replace(/8️⃣/g, "8.")
+    .replace(/9️⃣/g, "9.")
+    .replace(/🔟/g, "10.")
+
+    /* ======================================
+      3️⃣ Clean Invisible Unicode Garbage
+    ====================================== */
+
+    .replace(/[\uFE0F]/g, "")          // Variation selectors
+    .replace(/[\u200B-\u200D]/g, "")   // Zero width chars
+    .replace(/[\uFEFF]/g, "")          // BOM
+    .replace(/[\u20E3]/g, "")          // Keycap
+    .replace(/[\uE000-\uF8FF]/g, "")   // Private use area
+
+    /* ======================================
+      4️⃣ Remove Any Remaining Emojis Globally
+      (Full Unicode Emoji Strip)
+    ====================================== */
+    .replace(/\*\*\s+Soil/g, "**Soil")
+    .replace(/\*\*\s+Watering:/g, "**Watering")
+    .replace(/\*\*\s+Fertilization/g, "**Fertilization")
+
+    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "");
+
+
+    
     const html = marked.parse(cleaned);
     const converted = htmlToPdfmake(html);
 
@@ -144,7 +169,7 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
         stack: [
           {
             columns: [
-              { image: logoBase64, width: 65 },
+              { image: logoBase64, width: 130 },
               {
                 width: "*",
                 stack: [
@@ -210,17 +235,107 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
       }
     };
 
-    pdfMake.createPdf(documentDefinition).download("Nabta_AI_Report.pdf");
+    return new Promise((resolve) => {
+      pdfMake.createPdf(documentDefinition).download("Nabta_AI_Report.pdf");
+      resolve();
+    });
+  };
+
+  const handleDownloadWithProgress = async (msgId, originalText) => {
+    setDownloadingId(msgId);
+    setDownloadProgress(0);
+    
+    // Simulate progress while PDF is being generated
+    const progressInterval = setInterval(() => {
+      setDownloadProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + 10;
+      });
+    }, 100);
+    
+    try {
+      await downloadPdf(originalText);
+      setDownloadProgress(100);
+      setTimeout(() => {
+        setDownloadingId(null);
+        setDownloadProgress(0);
+      }, 500);
+    } catch (err) {
+      console.error(err);
+      setDownloadingId(null);
+      setDownloadProgress(0);
+    } finally {
+      clearInterval(progressInterval);
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, loading]);
+  }, [messages, loading, typedText]);
+
+  // Scroll to bottom on initial mount
+  useEffect(() => {
+    // Wait for DOM to fully render then scroll
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+    }, 200);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Save messages to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
+
+  // Typing animation effect
+  useEffect(() => {
+    if (!typingMessageId) return;
+    const msg = messages.find(m => m.id === typingMessageId);
+    if (!msg) return;
+
+    const fullText = msg.text;
+    if (typedText.length >= fullText.length) {
+      setTypingMessageId(null);
+      setTypedText("");
+      return;
+    }
+
+    // Type word by word - speed based on message length
+    const words = fullText.split(/(?<=\s)/);
+    const typedWords = typedText.split(/(?<=\s)/);
+    const nextWordIndex = typedWords.length;
+    
+    if (nextWordIndex >= words.length) {
+      setTypingMessageId(null);
+      setTypedText("");
+      return;
+    }
+
+    // Dynamic speed: more words per tick for longer messages
+    // Short (<100 words): 1 word at a time, 20ms
+    // Medium (100-500 words): 2-3 words at a time, 15ms
+    // Long (>500 words): 5-10 words at a time, 10ms
+    let wordsPerTick = 1;
+    let delay = 20;
+    
+    if (words.length > 500) {
+      wordsPerTick = Math.ceil(words.length / 100); // finish in ~100 ticks
+      delay = 5;
+    } else if (words.length > 200) {
+      wordsPerTick = 3;
+      delay = 10;
+    } else if (words.length > 100) {
+      wordsPerTick = 2;
+      delay = 15;
+    }
+
+    const timer = setTimeout(() => {
+      const newIndex = Math.min(nextWordIndex + wordsPerTick, words.length);
+      setTypedText(words.slice(0, newIndex).join(""));
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [typingMessageId, typedText, messages]);
 
   useEffect(() => {
     const footer = document.querySelector(".footer");
@@ -282,6 +397,14 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
       text: textToSend
     };
 
+    // Build chat history for Cohere (exclude download links)
+    const chatHistory = messages
+      .filter(m => !m.isDownloadLink)
+      .map(m => ({
+        role: m.role === "user" ? "USER" : "CHATBOT",
+        message: m.text
+      }));
+
     setMessages(prev => [...prev, userMessage]);
     if (messageText === null) {
       setInput("");
@@ -292,22 +415,22 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
       const result = await cohereChat({
         message: textToSend,
         preamble: SYSTEM_PREAMBLE,
-        chat_history: messages.map(m => ({
-          role: m.role === "user" ? "USER" : "CHATBOT",
-          message: m.text
-        })),
+        chat_history: chatHistory,
         temperature: 0.3
       });
 
+      const botMsgId = Date.now() + 1;
       const botMsg = {
-        id: Date.now() + 1,
+        id: botMsgId,
         role: "bot",
         text: result.data.text,
         isReport
       };
       setMessages(prev => [...prev, botMsg]);
+      setTypingMessageId(botMsgId);
+      setTypedText("");
 
-      // if this was a report response, enqueue a download hint after
+      // if this was a report response, show download link
       if (isReport) {
         setMessages(prev => [...prev, {
           id: Date.now() + 2,
@@ -326,13 +449,6 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
 
     } catch (err) {
       console.error(err);
-
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        role: "bot",
-        text: "🌱 The roots are tangled... please try again."
-      }]);
-
       // Reset ref so we can try again
       hasProcessedReportRef.current = false;
     }
@@ -343,30 +459,50 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
   const handleSendHidden = async (prompt) => {
     // Don't show user message, just show loading state
     setLoading(true);
+    setIsReportLoading(true);
 
     try {
-      const result = await cohereChat({
-        message: prompt,
-        preamble: SYSTEM_PREAMBLE,
-        chat_history: messages.map(m => ({
-          role: m.role === "user" ? "USER" : "CHATBOT",
-          message: m.text
-        })),
-        temperature: 0.3
-      });
+      let combinedText = "";
 
+      // Check if it's a batch request
+      if (prompt && prompt.isBatch && Array.isArray(prompt.prompts)) {
+        // Run all batch prompts in parallel
+        const results = await Promise.all(
+          prompt.prompts.map(p => 
+            cohereChat({
+              message: p,
+              preamble: SYSTEM_PREAMBLE,
+              temperature: 0.3
+            })
+          )
+        );
+        // Combine all responses
+        combinedText = results.map(r => r.data.text).join("\n\n---\n\n");
+      } else {
+        // Single prompt
+        const result = await cohereChat({
+          message: prompt,
+          preamble: SYSTEM_PREAMBLE,
+          temperature: 0.3
+        });
+        combinedText = result.data.text;
+      }
+
+      const hiddenBotMsgId = Date.now();
       setMessages(prev => [...prev, {
-        id: Date.now(),
+        id: hiddenBotMsgId,
         role: "bot",
-        text: result.data.text,
+        text: combinedText,
         isReport: true
       }]);
+      setTypingMessageId(hiddenBotMsgId);
+      setTypedText("");
 
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: "bot",
         isDownloadLink: true,
-        originalText: result.data.text
+        originalText: combinedText
       }]);
       // Notify parent that report has been processed
       if (onReportProcessed) {
@@ -376,18 +512,12 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
 
     } catch (err) {
       console.error(err);
-
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        role: "bot",
-        text: "🌱 The roots are tangled... please try again."
-      }]);
-
       // Reset ref so we can try again
       hasProcessedReportRef.current = false;
     }
 
     setLoading(false);
+    setIsReportLoading(false);
   };
 
   const handleKeyDown = (e) => {
@@ -408,8 +538,12 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
             ? "flex-end"
             : (arabic ? "rtl-align" : "ltr-align");
 
-          // special case for download link entries
+          // special case for download link entries - hide while typing is in progress
           if (msg.isDownloadLink) {
+            // Don't show download link while bot is still typing
+            if (typingMessageId) return null;
+
+            const isDownloading = downloadingId === msg.id;
             return (
               <div key={msg.id} className={`chat-row ${alignment}`}>
                 <div className="download-pdf-link">
@@ -417,15 +551,25 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      downloadPdf(msg.originalText);
+                      if (!isDownloading) {
+                        handleDownloadWithProgress(msg.id, msg.originalText);
+                      }
                     }}
+                    style={{ pointerEvents: isDownloading ? 'none' : 'auto' }}
                   >
-                    📄 Download Professional PDF Report
+                    {isDownloading 
+                      ? `⏳ Downloading... ${downloadProgress}%`
+                      : '📄 Download Professional PDF Report'
+                    }
                   </a>
                 </div>
               </div>
             );
           }
+
+          const displayText = (typingMessageId === msg.id && msg.role === "bot")
+            ? typedText
+            : msg.text;
 
           return (
             <div key={msg.id} className={`chat-row ${alignment}`}>
@@ -433,16 +577,20 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
                 className={`chat-bubble ${msg.role === "user" ? "user" : "bot"}`}
                 dir={arabic ? "rtl" : "ltr"}
                 dangerouslySetInnerHTML={{
-                  __html: marked.parse(msg.text)
+                  __html: marked.parse(displayText || " ")
                 }}
               />
+              {typingMessageId === msg.id && (
+                <span className="typing-cursor">▌</span>
+              )}
             </div>
           );
         })}
 
         {loading && (() => {
           const lastUserMessage = messages.filter(m => m.role === "user").pop();
-          const isArabicInput = lastUserMessage && isArabic(lastUserMessage.text);
+          // For report prompts, always use English loading text
+          const isArabicInput = !isReportLoading && lastUserMessage && lastUserMessage.text && isArabic(lastUserMessage.text);
           const loadingText = isArabicInput ? "فحص الجذور..." : "Examining roots...";
           const loadingDir = isArabicInput ? "rtl" : "ltr";
           const loadingAlignment = isArabicInput ? "rtl-align" : "ltr-align";

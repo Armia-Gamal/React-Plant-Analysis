@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../index.css";
 import "./Login.css";
 import image from "../assets/images/Image.png";
@@ -16,6 +16,21 @@ import { auth, googleProvider } from "../firebase";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const notAccess = location && location.state && location.state.notAccess;
+  const [showNotAccess, setShowNotAccess] = useState(false);
+
+  useEffect(() => {
+    if (notAccess) {
+      setShowNotAccess(true);
+      const timer = setTimeout(() => {
+        setShowNotAccess(false);
+        // Reset state so message doesn't show again
+        window.history.replaceState({}, '', window.location.pathname);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notAccess]);
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -25,7 +40,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    document.title = "Login | Nabta Seniors";
+    document.title = "Login | Nabta-System";
   }, []);
 
   // تحميل Remember Me
@@ -122,6 +137,58 @@ export default function Login() {
 
   return (
     <main className="login-layout">
+      {showNotAccess && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.45)",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <div style={{
+            minWidth: "320px",
+            maxWidth: "90vw",
+            padding: "32px 40px 32px 32px",
+            borderRadius: "18px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+            background: "#fff",
+            color: "#dc2626",
+            fontSize: "1.6rem",
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            border: "2px solid #dc2626",
+            outline: "4px solid #fff",
+            position: "relative"
+          }}>
+            <span style={{fontSize: "1.7rem", fontWeight: "bold"}}>Not Access</span>
+            <button
+              style={{
+                background: "none",
+                border: "none",
+                color: "#dc2626",
+                fontSize: "2rem",
+                cursor: "pointer",
+                marginLeft: "24px",
+                position: "absolute",
+                top: "12px",
+                right: "18px"
+              }}
+              onClick={() => setShowNotAccess(false)}
+              aria-label="Close Not Access message"
+              autoFocus
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
       <section className="login-left">
         <div className="login-card-box">
           <h2>Welcome Back</h2>
