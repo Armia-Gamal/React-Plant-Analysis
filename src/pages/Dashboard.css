@@ -4,6 +4,11 @@ html, body {
   overflow-x: hidden;
 }
 
+/* utility */
+.hidden {
+  display: none;
+}
+
 .main-content {
   margin-left: 250px;
   width: calc(100% - 250px);
@@ -142,4 +147,88 @@ html, body {
 .nav-icon:hover {
   background: #53C8BF;
   color: white;
+}
+/* ===== Chat Header in Navbar ===== */
+
+.navbar-center.chat-header-navbar {
+  flex-direction: row;
+  gap: 12px;
+  position: relative;
+}
+
+.chat-header-navbar h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.new-chat-btn {
+  width: 36px;
+  height: 36px;
+  background-color: #22C55E;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  font-weight: bold;
+}
+
+.new-chat-btn:hover {
+  background-color: #16A34A;
+}
+
+.menu-btn {
+  width: 36px;
+  height: 36px;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  color: #6B7280;
+}
+
+.menu-btn:hover {
+  background-color: #F3F4F6;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  min-width: 150px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 8px;
+}
+
+.menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  transition: 0.2s;
+}
+
+.menu-dropdown button:hover {
+  background-color: #F3F4F6;
 }

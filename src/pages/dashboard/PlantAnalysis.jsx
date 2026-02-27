@@ -6,7 +6,7 @@ import classImg from "../../assets/images/Crop.jpg";
 import segmentImg from "../../assets/images/opacity-planet.jpg";
 import "./PlantAnalysis.css";
 
-export default function PlantAnalysis({ setStep, setProgressValue }) {
+export default function PlantAnalysis({ setStep, setProgressValue, onSendReport }) {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -20,6 +20,9 @@ export default function PlantAnalysis({ setStep, setProgressValue }) {
   const [segStatus, setSegStatus] = useState("Waiting"); // segmentation status
   const [progress, setProgress] = useState(0);
   const [totalBoxes, setTotalBoxes] = useState(0);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportData, setReportData] = useState(null);
+  const [hoveredSegment, setHoveredSegment] = useState(null);
 
   const defaultClassification = {
     image: classImg,
@@ -43,6 +46,293 @@ export default function PlantAnalysis({ setStep, setProgressValue }) {
 
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
+
+  // Generate timestamp for image ID
+  const generateImageId = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+    return `IMG_${year}_${month}_${day}_${hours}${minutes}${seconds}`;
+  };
+
+  // Format classifications into report JSON structure
+  const formatReportData = () => {
+    const imageId = generateImageId();
+    const leaves = classifications
+      .filter(c => c.disease && c.disease !== "Awaiting Detection")
+      .map((c, idx) => ({
+        leaf_id: idx + 1,
+        plant_name: c.disease || "Unknown",
+        disease_name: c.category || "Not Classified",
+        disease_percentage: parseFloat(c.diseasePercentage) || 0,
+        severity: c.severity || "Unknown",
+        image: c.image || null
+      }));
+
+    return {
+      image_id: imageId,
+      total_leaves_detected: leaves.length,
+      leaves: leaves
+    };
+  };
+
+  // Generate AI prompt for single disease (Markdown format)
+  const generateAIPrompt = (leafData) => {
+    return `
+# 🌿 AI Plant Disease Smart Report
+
+You are a professional plant pathology expert specialized in diagnosing and treating crop and fruit tree diseases.
+
+---
+
+## 📌 Case Information
+
+- **Plant Name:** ${leafData.plant_name}
+- **Health Status:** Diseased
+- **Disease Name:** ${leafData.disease_name}
+- **Infection Area:** ${leafData.disease_percentage}%
+- **Severity Level:** ${leafData.severity}
+
+---
+
+## 1️⃣ Disease Overview
+
+Provide a clear explanation of:
+
+- What is **${leafData.disease_name}** in ${leafData.plant_name}?
+- What type of pathogen causes it? (Fungus, Bacteria, Virus, etc.)
+- How does it biologically affect the plant tissues?
+
+---
+
+## 2️⃣ Causes of the Disease
+
+Explain the possible causes including:
+
+- 🌦 Environmental factors (humidity, temperature, rainfall, poor ventilation)
+- 🌱 Soil-related issues
+- 💧 Irrigation mistakes
+- 🌿 Fertilization imbalance
+- 🛡 Plant immunity weakness
+- 🔄 Infection spread mechanisms
+
+---
+
+## 3️⃣ Infection Percentage Analysis (${leafData.disease_percentage}%)
+
+- Is this infection level considered low, moderate, or high?
+- What does ${leafData.disease_percentage}% infection practically mean?
+- Can the disease still be controlled at this stage?
+- Expected progression if untreated
+
+---
+
+## 4️⃣ Severity Level Assessment (${leafData.severity})
+
+- What does "${leafData.severity}" severity indicate?
+- Biological impact at this stage
+- Risk level if no intervention is applied
+
+---
+
+## 5️⃣ Step-by-Step Treatment Plan
+
+Provide a structured treatment plan including:
+
+### 🚑 Immediate Actions
+- First emergency steps
+
+### ✂️ Pruning Strategy
+- How to safely remove infected parts
+
+### 🧪 Treatment Recommendations
+- Recommended active ingredients (not only brand names)
+- Fungicides / bactericides if applicable
+
+### 📅 Application Schedule
+- Spray intervals
+- Duration of treatment
+
+### 🛡 Post-Treatment Protection
+- Prevent reinfection
+
+---
+
+## 6️⃣ Long-Term Prevention Strategy
+
+- 🌬 Improve air circulation
+- 📏 Proper plant spacing
+- 💦 Optimized irrigation practices
+- 🌾 Balanced fertilization program
+- 🧼 Tool sterilization procedures
+- 🧑‍🌾 Seasonal monitoring plan
+
+---
+
+## 7️⃣ Warning Signs & Escalation
+
+- Symptoms indicating disease worsening
+- When immediate professional agricultural consultation is required
+
+---
+
+# ✅ Response Instructions
+
+- Use clear headings and bullet points.
+- Keep the explanation scientifically accurate.
+- Make it understandable for farmers and non-experts.
+- Avoid overly complex academic terminology.
+- Keep the structure clean and organized in Markdown format.
+`;
+  };
+
+  const generateAllDiseasesPrompt = () => {
+    const diseasedLeaves = reportData.leaves.filter(
+      leaf =>
+        leaf.severity &&
+        leaf.severity !== "Healthy" &&
+        leaf.severity !== "Not Determined" &&
+        leaf.severity !== "Not Severity Yet"
+    );
+
+    const diseasesList = diseasedLeaves
+      .map(
+        (leaf, idx) => `
+  ### 🌿 Disease #${idx + 1}
+
+  - **Plant Name:** ${leaf.plant_name}
+  - **Disease Name:** ${leaf.disease_name}
+  - **Infection Area:** ${leaf.disease_percentage}%
+  - **Severity Level:** ${leaf.severity}
+  `
+      )
+      .join("\n---\n");
+
+    return `
+  # 🌱 Comprehensive Plant Health Smart Report
+
+  You are a professional plant pathology expert specialized in diagnosing and treating crop and fruit diseases.
+
+  Below is a multi-disease analysis request based on AI-detected plant conditions.
+
+  ---
+
+  ${diseasesList}
+
+  ---
+
+  # 📊 Required Analysis Structure
+
+  For **each disease listed above**, provide a fully structured scientific report using the following sections:
+
+  ---
+
+  ## 1️⃣ Disease Overview
+
+  - What is the disease?
+  - What pathogen type causes it? (Fungus, Bacteria, Virus, etc.)
+  - How does it biologically impact the plant?
+
+  ---
+
+  ## 2️⃣ Causes & Risk Factors
+
+  Explain possible causes including:
+
+  - 🌦 Environmental conditions (humidity, temperature, rainfall, airflow)
+  - 🌱 Soil-related problems
+  - 💧 Irrigation mismanagement
+  - 🌿 Fertilization imbalance
+  - 🛡 Weak plant immunity
+  - 🔄 Disease transmission mechanisms
+
+  ---
+
+  ## 3️⃣ Infection Percentage Analysis
+
+  - Is the infection percentage considered mild, moderate, or severe?
+  - What does this percentage practically mean for crop productivity?
+  - Can the condition still be controlled at this stage?
+
+  ---
+
+  ## 4️⃣ Severity Level Assessment
+
+  - What does the severity classification indicate?
+  - Biological and economic risk level
+  - What happens if no treatment is applied?
+
+  ---
+
+  ## 5️⃣ Step-by-Step Treatment Plan
+
+  Provide a clear structured treatment protocol including:
+
+  ### 🚑 Immediate Actions
+  ### ✂️ Pruning & Isolation
+  ### 🧪 Recommended Active Ingredients
+  ### 📅 Spray Frequency & Duration
+  ### 🛡 Post-Treatment Protection
+
+  ---
+
+  ## 6️⃣ Long-Term Prevention Strategy
+
+  - 🌬 Improve ventilation
+  - 📏 Optimal plant spacing
+  - 💦 Irrigation best practices
+  - 🌾 Balanced fertilization
+  - 🧼 Tool sanitation
+  - 📆 Seasonal monitoring
+
+  ---
+
+  ## 7️⃣ Farm-Level Summary
+
+  At the end, provide:
+
+  - 📈 Overall farm health assessment
+  - ⚠ Most critical disease among the listed cases
+  - 🧠 Recommended priority order of treatment
+
+  ---
+
+  # ✅ Formatting Rules
+
+  - Use clear Markdown headings.
+  - Separate each disease with horizontal lines.
+  - Use bullet points.
+  - Keep explanations scientifically accurate but farmer-friendly.
+  - Avoid overly complex academic terminology.
+  - Keep formatting clean and structured.
+  `;
+  };
+
+  const handleGenerateReport = () => {
+    const data = formatReportData();
+    setReportData(data);
+    setShowReportModal(true);
+  };
+
+  const handleSendToAI = (leafData, isHidden = false) => {
+    let prompt;
+    if (leafData === "all") {
+      prompt = generateAllDiseasesPrompt();
+    } else {
+      prompt = generateAIPrompt(leafData);
+    }
+    
+    if (onSendReport) {
+      onSendReport(prompt, isHidden);
+    } else {
+      sessionStorage.setItem("plantAnalysisPrompt", prompt);
+    }
+    setShowReportModal(false);
+  };
 
   const handleFile = (file) => {
     if (!file) return;
@@ -290,21 +580,6 @@ export default function PlantAnalysis({ setStep, setProgressValue }) {
       );
 
       // prepare requests in parallel for speed
-      const classifyPromise = (async () => {
-        try {
-          const form = new FormData();
-          form.append("file", blob);
-          const resp = await fetch(
-            "https://armia-gamal-plant-leaf-detection-api.hf.space/classify",
-            { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: form }
-          );
-          return resp.ok ? await resp.json() : null;
-        } catch (e) {
-          console.warn("classify error", e);
-          return null;
-        }
-      })();
-
       const camPromise = (async () => {
         try {
           const form = new FormData();
@@ -335,17 +610,17 @@ export default function PlantAnalysis({ setStep, setProgressValue }) {
         }
       })();
 
-      const [cData, camData, sData] = await Promise.all([classifyPromise, camPromise, segPromise]);
+      const [camData, sData] = await Promise.all([camPromise, segPromise]);
 
-      // merge results: prefer classify results, fall back to CAM metadata when classify failed
-      const plantName = (cData && cData.plant_name) || (camData && camData.plant_name) || "Awaiting Detection";
-      const diseaseName = (cData && cData.disease_name) || (camData && camData.disease_name) || "Not Classified Yet";
-      const confidenceRaw = (cData && typeof cData.confidence === 'number') ? cData.confidence : ((camData && typeof camData.confidence === 'number') ? camData.confidence : 0);
-      const diseasePercentRaw = (cData && typeof cData.disease_percentage === 'number') ? cData.disease_percentage : ((camData && typeof camData.disease_percentage === 'number') ? camData.disease_percentage : 0);
-      const severityName = (cData && cData.severity) || (camData && camData.severity) || "Not Determined";
+      // use CAM results as the primary source
+      const plantName = (camData && camData.plant_name) || "Awaiting Detection";
+      const diseaseName = (camData && camData.disease_name) || "Not Classified Yet";
+      const confidenceRaw = (camData && typeof camData.confidence === 'number') ? camData.confidence : 0;
+      const diseasePercentRaw = (camData && typeof camData.disease_percentage === 'number') ? camData.disease_percentage : 0;
+      const severityName = (camData && camData.severity) || "Not Determined";
 
       const entry = {
-        image: cData && cData.image_base64 ? "data:image/jpeg;base64," + cData.image_base64 : canvas.toDataURL(),
+        image: camData && camData.image_base64 ? "data:image/jpeg;base64," + camData.image_base64 : canvas.toDataURL(),
         disease: plantName,
         category: diseaseName,
         confidence: confidenceRaw ? (confidenceRaw * 100).toFixed(2) : 0,
@@ -475,7 +750,6 @@ export default function PlantAnalysis({ setStep, setProgressValue }) {
 
       <div className="cards-row">
 
-        {/* Detection Card (زي ما هو) */}
         <div className="card small-card detection-card">
           <div className="detection-header">
             <h2 className="detection-title">Object Detection</h2>
@@ -575,6 +849,9 @@ export default function PlantAnalysis({ setStep, setProgressValue }) {
 
         </div>
 
+
+        {/* Segmentation (dynamic mask) */}
+
         {/* Segmentation (dynamic mask) */}
         <div className="card small-card segmentation-card">
           <div className="segmentation-header">
@@ -595,6 +872,110 @@ export default function PlantAnalysis({ setStep, setProgressValue }) {
         </div>
 
       </div>
+
+      {classificationStatus === "Completed" && classifications.length > 0 && classifications[0].disease !== "" && (
+        <p className="report-link-text" onClick={handleGenerateReport}>
+          View Analysis Report
+        </p>
+      )}
+
+      {showReportModal && reportData && (
+        <div className="report-modal-overlay" onClick={() => setShowReportModal(false)}>
+          <div className="report-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="report-modal-header">
+              <h2>Disease Analysis Report</h2>
+              <button 
+                className="report-close-btn"
+                onClick={() => setShowReportModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="report-modal-content">
+              <div className="report-leaves-list">
+                <h3>Detected Diseases</h3>
+
+                {/* donut stats */}
+                {reportData.leaves.length > 0 && (() => {
+                  const healthyCount = reportData.leaves.filter(l => l.severity === "Healthy").length;
+                  const diseasedCount = reportData.leaves.length - healthyCount;
+                  const total = reportData.leaves.length;
+                  const healthyPct = total ? Math.round((healthyCount/total)*100) : 0;
+                  const diseasedPct = total ? 100 - healthyPct : 0;
+                  return (
+                    <div className="donut-container">
+                      <div
+                        className="donut-chart"
+                        onMouseLeave={() => setHoveredSegment(null)}
+                        onMouseMove={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const x = e.clientX - rect.left - rect.width/2;
+                          const y = e.clientY - rect.top - rect.height/2;
+                          const angle = Math.atan2(y, x) * (180/Math.PI) + 180; // 0-360
+                          const threshold = (diseasedPct/100) * 360;
+                          if (angle <= threshold) {
+                            setHoveredSegment(`Diseased ${diseasedPct}%`);
+                          } else {
+                            setHoveredSegment(`Healthy ${healthyPct}%`);
+                          }
+                        }}
+                        style={{"--pct": diseasedPct + "%"}}
+                      >
+                        <div className="donut-center">
+                          {hoveredSegment || `${diseasedPct}% diseased`}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {reportData.leaves.length > 0 ? (
+                  <>
+                    <div className="leaves-cards-with-images">
+                      {reportData.leaves.map((leaf, idx) => (
+                        <div key={idx} className="leaf-card-with-image">
+                          <div className="leaf-image-col">
+                            {leaf.image && (
+                              <img src={leaf.image} alt={`Leaf ${leaf.leaf_id}`} className="leaf-report-image" />
+                            )}
+                          </div>
+                          <div className="leaf-info-col">
+                            <h4>Disease #{leaf.leaf_id}</h4>
+                            <p><strong>Plant:</strong> {leaf.plant_name}</p>
+                            <p><strong>Disease:</strong> {leaf.disease_name}</p>
+                            <p><strong>Infection:</strong> {leaf.disease_percentage}%</p>
+                            <p><strong>Severity:</strong> {leaf.severity}</p>
+                          {leaf.severity !== "Healthy" && (
+                            <button
+                              className="send-to-ai-btn"
+                              onClick={() => handleSendToAI(leaf, true)}
+                            >
+                              Get Smart Report
+                            </button>
+                          )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {reportData.leaves.length > 1 && (
+                      <button
+                        className="send-all-btn"
+                        onClick={() => handleSendToAI("all", true)}
+                      >
+                        Get Full Smart Report (for all diseases)
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <p>No diseased leaves detected.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

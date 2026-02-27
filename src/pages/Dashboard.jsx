@@ -16,27 +16,50 @@ export default function Dashboard() {
   // 3 Classify
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [pendingReport, setPendingReport] = useState(null);
+  const [showChatMenu, setShowChatMenu] = useState(false);
+  const [newChatTrigger, setNewChatTrigger] = useState(0);
 
   useEffect(() => {
     document.title = "Dashboard | Nabta Seniors";
   }, []);
 
+  const handleSendReport = (prompt, isHidden = false) => {
+    setPendingReport({ prompt, isHidden });
+    setActivePage("ai");
+  };
+
+  const handleNewChat = () => {
+    setNewChatTrigger(prev => prev + 1);
+    setShowChatMenu(false);
+  };
+
+  // render all pages but hide the inactive ones; this preserves state such as images
   const renderContent = () => {
-    switch (activePage) {
-      case "ai":
-        return <AIAssistant />;
-      case "history":
-        return <History />;
-      case "profile":
-        return <Profile />;
-      default:
-        return (
+    return (
+      <>
+        <div className={activePage === "plant" ? "" : "hidden"}>
           <PlantAnalysis
             setStep={setStep}
             setProgressValue={setProgress}
+            onSendReport={handleSendReport}
           />
-        );
-    }
+        </div>
+        <div className={activePage === "ai" ? "" : "hidden"}>
+          <AIAssistant 
+            pendingReport={pendingReport}
+            onReportProcessed={() => setPendingReport(null)}
+            newChatTrigger={newChatTrigger}
+          />
+        </div>
+        <div className={activePage === "history" ? "" : "hidden"}>
+          <History />
+        </div>
+        <div className={activePage === "profile" ? "" : "hidden"}>
+          <Profile />
+        </div>
+      </>
+    );
   };
 
   const isDone = (index) => step > index;
@@ -112,6 +135,17 @@ export default function Dashboard() {
                   {isDone(3) && "✓"}
                 </span>
 
+              </div>
+
+            </div>
+          )}
+
+          {activePage === "ai" && (
+            <div className="navbar-center chat-header-navbar">
+              <h3>Nabta AI Assistant 🌿</h3>
+
+              <div className="nav-icon" onClick={handleNewChat} title="Start new chat">
+                +
               </div>
 
             </div>
