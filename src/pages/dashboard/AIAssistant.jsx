@@ -7,34 +7,34 @@ import "./AIAssistant.css";
 // Import logo as base64 data URL for PDF generation (works in production)
 import nabtaLogo from "../../assets/images/New Project (1).png";
 
-// Lazy load pdfMake to ensure proper font initialization
-// Note: window.pdfMake is pre-initialized in index.html to prevent vfs_fonts crash
+// Load pdfMake from CDN to avoid bundler issues with vfs_fonts
 let pdfMakeReady = null;
 const getPdfMake = () => {
   if (pdfMakeReady) return pdfMakeReady;
   
-  pdfMakeReady = (async () => {
-    // Import pdfmake core
-    const pdfMakeModule = await import("pdfmake/build/pdfmake");
-    const pdfMake = pdfMakeModule.default || pdfMakeModule;
-    
-    // Preserve any vfs that was already loaded (from preload), then update global
-    const existingVfs = window.pdfMake?.vfs;
-    window.pdfMake = pdfMake;
-    if (existingVfs && Object.keys(existingVfs).length > 0) {
-      pdfMake.vfs = existingVfs;
+  pdfMakeReady = new Promise((resolve, reject) => {
+    // Check if already loaded
+    if (window.pdfMake && window.pdfMake.createPdf) {
+      resolve(window.pdfMake);
+      return;
     }
     
-    // Import vfs_fonts - it will attach vfs to window.pdfMake
-    await import("pdfmake/build/vfs_fonts");
-    
-    // Ensure vfs is set on our instance
-    if (window.pdfMake.vfs && Object.keys(window.pdfMake.vfs).length > 0) {
-      pdfMake.vfs = window.pdfMake.vfs;
-    }
-    
-    return pdfMake;
-  })();
+    // Load pdfmake from CDN
+    const script1 = document.createElement('script');
+    script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js';
+    script1.onload = () => {
+      // Load vfs_fonts after pdfmake
+      const script2 = document.createElement('script');
+      script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js';
+      script2.onload = () => {
+        resolve(window.pdfMake);
+      };
+      script2.onerror = reject;
+      document.head.appendChild(script2);
+    };
+    script1.onerror = reject;
+    document.head.appendChild(script1);
+  });
   
   return pdfMakeReady;
 };
