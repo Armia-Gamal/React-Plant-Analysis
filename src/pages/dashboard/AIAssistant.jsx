@@ -6,7 +6,9 @@ import pdfFonts from "pdfmake/build/vfs_fonts";
 import htmlToPdfmake from "html-to-pdfmake";
 import "./AIAssistant.css";
 
-pdfMake.vfs = pdfFonts.vfs;
+if (typeof window !== "undefined" && window.pdfMake?.vfs) {
+  pdfMake.vfs = window.pdfMake.vfs;
+}
 // Import logo as base64 data URL for PDF generation (works in production)
 import nabtaLogo from "../../assets/images/New Project (1).png";
 
