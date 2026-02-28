@@ -3,8 +3,10 @@ import { marked } from "marked";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
-import htmlToPdfmake from "html-to-pdfmake";import "./AIAssistant.css";
+import htmlToPdfmake from "html-to-pdfmake";
+import "./AIAssistant.css";
 pdfMake.vfs = pdfFonts.vfs;
+// Import logo as base64 data URL for PDF generation (works in production)
 import nabtaLogo from "../../assets/images/New Project (1).png";
 
 marked.setOptions({ breaks: true });
@@ -148,17 +150,65 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
     const html = marked.parse(cleaned);
     const converted = htmlToPdfmake(html);
 
-    const toBase64 = (url) =>
-      fetch(url)
-        .then(res => res.blob())
-        .then(blob => new Promise((resolve, reject) => {
+    // Convert image URL to base64 with CORS handling for production
+    const toBase64 = async (url) => {
+      try {
+        // Try fetching with no-cors mode first
+        const res = await fetch(url, { mode: 'cors' });
+        const blob = await res.blob();
+        return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result);
           reader.onerror = reject;
           reader.readAsDataURL(blob);
-        }));
+        });
+      } catch (error) {
+        // Fallback: use Image element to convert to base64
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          };
+          img.onerror = () => {
+            // Return empty string if all methods fail - PDF will generate without logo
+            resolve('');
+          };
+          img.src = url;
+        });
+      }
+    };
 
     const logoBase64 = await toBase64(nabtaLogo);
+
+    // Build header columns - only include logo if successfully loaded
+    const headerColumns = [];
+    if (logoBase64) {
+      headerColumns.push({ image: logoBase64, width: 130 });
+    }
+    headerColumns.push({
+      width: "*",
+      stack: [
+        {
+          text: "Nabta AI Smart Plant Report",
+          alignment: logoBase64 ? "center" : "left",
+          fontSize: 22,
+          bold: true
+        },
+        {
+          text: "Generated on: " + new Date().toLocaleString(),
+          alignment: logoBase64 ? "center" : "left",
+          fontSize: 10,
+          color: "gray",
+          margin: [0, 5, 0, 5]
+        }
+      ]
+    });
 
     const documentDefinition = {
       pageSize: "A4",
@@ -168,27 +218,7 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
         margin: [40, 30, 40, 10],
         stack: [
           {
-            columns: [
-              { image: logoBase64, width: 130 },
-              {
-                width: "*",
-                stack: [
-                  {
-                    text: "Nabta AI Smart Plant Report",
-                    alignment: "center",
-                    fontSize: 22,
-                    bold: true
-                  },
-                  {
-                    text: "Generated on: " + new Date().toLocaleString(),
-                    alignment: "center",
-                    fontSize: 10,
-                    color: "gray",
-                    margin: [0, 5, 0, 5]
-                  }
-                ]
-              }
-            ]
+            columns: headerColumns
           },
           {
             canvas: [
