@@ -1,19 +1,30 @@
 import { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import pdfMake from "pdfmake/build/pdfmake";
-import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import htmlToPdfmake from "html-to-pdfmake";
 import "./AIAssistant.css";
 
-// Initialize pdfMake fonts - handle different export formats
-if (pdfFonts && pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
-  pdfMake.vfs = pdfFonts.pdfMake.vfs;
-} else if (pdfFonts && pdfFonts.vfs) {
-  pdfMake.vfs = pdfFonts.vfs;
-} else if (pdfFonts && pdfFonts.default && pdfFonts.default.pdfMake) {
-  pdfMake.vfs = pdfFonts.default.pdfMake.vfs;
-}
+// Dynamic import for pdfMake to handle fonts properly
+let pdfMakeInstance = null;
+const getPdfMake = async () => {
+  if (pdfMakeInstance) return pdfMakeInstance;
+  
+  const pdfMakeModule = await import("pdfmake/build/pdfmake");
+  const pdfFontsModule = await import("pdfmake/build/vfs_fonts");
+  
+  const pdfMake = pdfMakeModule.default || pdfMakeModule;
+  const pdfFonts = pdfFontsModule.default || pdfFontsModule;
+  
+  // Try different possible structures
+  if (pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
+    pdfMake.vfs = pdfFonts.pdfMake.vfs;
+  } else if (pdfFonts.vfs) {
+    pdfMake.vfs = pdfFonts.vfs;
+  }
+  
+  pdfMakeInstance = pdfMake;
+  return pdfMake;
+};
 // Import logo as base64 data URL for PDF generation (works in production)
 import nabtaLogo from "../../assets/images/New Project (1).png";
 
@@ -273,6 +284,7 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
       }
     };
 
+    const pdfMake = await getPdfMake();
     return new Promise((resolve) => {
       pdfMake.createPdf(documentDefinition).download("Nabta_AI_Report.pdf");
       resolve();
