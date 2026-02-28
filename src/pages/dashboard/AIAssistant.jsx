@@ -2,13 +2,17 @@ import { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
 import htmlToPdfmake from "html-to-pdfmake";
 import "./AIAssistant.css";
 
-if (typeof window !== "undefined" && window.pdfMake?.vfs) {
-  pdfMake.vfs = window.pdfMake.vfs;
-}
+pdfMake.fonts = {
+  Helvetica: {
+    normal: "Helvetica",
+    bold: "Helvetica-Bold",
+    italics: "Helvetica-Oblique",
+    bolditalics: "Helvetica-BoldOblique",
+  },
+};
 // Import logo as base64 data URL for PDF generation (works in production)
 import nabtaLogo from "../../assets/images/New Project (1).png";
 
@@ -216,7 +220,9 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
     const documentDefinition = {
       pageSize: "A4",
       pageMargins: [40, 100, 40, 60],
-
+        defaultStyle: {
+          font: "Helvetica"
+        },
       header: {
         margin: [40, 30, 40, 10],
         stack: [
