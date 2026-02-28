@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import pdfMake from "pdfmake/build/pdfmake";
-import * as pdfFonts from "pdfmake/build/vfs_fonts";
+import pdfFonts from "pdfmake/build/vfs_fonts";
 import htmlToPdfmake from "html-to-pdfmake";
 import "./AIAssistant.css";
 
