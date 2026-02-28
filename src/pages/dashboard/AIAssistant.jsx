@@ -8,23 +8,28 @@ import "./AIAssistant.css";
 import nabtaLogo from "../../assets/images/New Project (1).png";
 
 // Lazy load pdfMake to ensure proper font initialization
+// Note: window.pdfMake is pre-initialized in index.html to prevent vfs_fonts crash
 let pdfMakeReady = null;
 const getPdfMake = () => {
   if (pdfMakeReady) return pdfMakeReady;
   
   pdfMakeReady = (async () => {
-    // First, import pdfmake core
+    // Import pdfmake core
     const pdfMakeModule = await import("pdfmake/build/pdfmake");
     const pdfMake = pdfMakeModule.default || pdfMakeModule;
     
-    // Set global before importing fonts
+    // Preserve any vfs that was already loaded (from preload), then update global
+    const existingVfs = window.pdfMake?.vfs;
     window.pdfMake = pdfMake;
+    if (existingVfs && Object.keys(existingVfs).length > 0) {
+      pdfMake.vfs = existingVfs;
+    }
     
     // Import vfs_fonts - it will attach vfs to window.pdfMake
     await import("pdfmake/build/vfs_fonts");
     
     // Ensure vfs is set on our instance
-    if (window.pdfMake.vfs) {
+    if (window.pdfMake.vfs && Object.keys(window.pdfMake.vfs).length > 0) {
       pdfMake.vfs = window.pdfMake.vfs;
     }
     
