@@ -4,29 +4,35 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import htmlToPdfmake from "html-to-pdfmake";
 import "./AIAssistant.css";
 
-// Dynamic import for pdfMake to handle fonts properly
-let pdfMakeInstance = null;
-const getPdfMake = async () => {
-  if (pdfMakeInstance) return pdfMakeInstance;
-  
-  const pdfMakeModule = await import("pdfmake/build/pdfmake");
-  const pdfFontsModule = await import("pdfmake/build/vfs_fonts");
-  
-  const pdfMake = pdfMakeModule.default || pdfMakeModule;
-  const pdfFonts = pdfFontsModule.default || pdfFontsModule;
-  
-  // Try different possible structures
-  if (pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
-    pdfMake.vfs = pdfFonts.pdfMake.vfs;
-  } else if (pdfFonts.vfs) {
-    pdfMake.vfs = pdfFonts.vfs;
-  }
-  
-  pdfMakeInstance = pdfMake;
-  return pdfMake;
-};
 // Import logo as base64 data URL for PDF generation (works in production)
 import nabtaLogo from "../../assets/images/New Project (1).png";
+
+// Lazy load pdfMake to ensure proper font initialization
+let pdfMakeReady = null;
+const getPdfMake = () => {
+  if (pdfMakeReady) return pdfMakeReady;
+  
+  pdfMakeReady = (async () => {
+    // First, import pdfmake core
+    const pdfMakeModule = await import("pdfmake/build/pdfmake");
+    const pdfMake = pdfMakeModule.default || pdfMakeModule;
+    
+    // Set global before importing fonts
+    window.pdfMake = pdfMake;
+    
+    // Import vfs_fonts - it will attach vfs to window.pdfMake
+    await import("pdfmake/build/vfs_fonts");
+    
+    // Ensure vfs is set on our instance
+    if (window.pdfMake.vfs) {
+      pdfMake.vfs = window.pdfMake.vfs;
+    }
+    
+    return pdfMake;
+  })();
+  
+  return pdfMakeReady;
+};
 
 marked.setOptions({ breaks: true });
 
