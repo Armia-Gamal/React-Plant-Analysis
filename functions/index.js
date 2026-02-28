@@ -50,22 +50,22 @@ exports.sendWelcomeEmail = functions.https.onCall(async (data, context) => {
     await transporter.verify();
 
     const mailOptions = {
-      from: `Nabta-Seniors <${gmailUser}>`,
+      from: `Nabta-System <${gmailUser}>`,
       to: email,
-      subject: `Welcome to Nabta-Seniors, ${name}! ❤️`,
+      subject: `Welcome to Nabta-System, ${name}! ❤️`,
       html: `
     <div style="font-family: system-ui, sans-serif, Arial; font-size: 16px; background-color: #fff8f1;">
       <div style="max-width: 600px; margin: auto; padding: 20px;">
 
         <a href="https://nabta-seniors.netlify.app/" target="_blank" style="text-decoration:none;">
           <img 
-            src="https://i.imgur.com/A0LWWKw.png"
-            alt="Nabta-Seniors Logo"
+            src="https://firebasestorage.googleapis.com/v0/b/gp-hu-42ca5.firebasestorage.app/o/%D9%8A%D8%B3%20(1).png?alt=media&token=6cf4c7b3-2956-456d-a23c-d16719d2e6ad"
+            alt="Nabta-System Logo"
             style="height:50px; margin-bottom:20px;"
           />
         </a>
 
-        <p>Welcome to the Nabta-Seniors family ❤️ We're excited to have you on board.</p>
+        <p>Welcome to the Nabta-System family ❤️ We're excited to have you on board.</p>
 
         <p>Your account has been successfully created, and you're now ready to explore all the great features we offer.</p>
 
@@ -74,7 +74,7 @@ exports.sendWelcomeEmail = functions.https.onCall(async (data, context) => {
             href="https://nabta-seniors.netlify.app/"
             target="_blank"
             style="display:inline-block; text-decoration:none; color:#ffffff; background-color:#fc0038; padding:10px 20px; border-radius:6px; font-weight:bold;">
-            Open Nabta-Seniors
+            Open Nabta-System
           </a>
         </p>
 
@@ -170,3 +170,90 @@ exports.cohereChat = functions.https.onCall(async (data, context) => {
     );
   }
 });
+
+// ==========================================================
+// SEND CUSTOM PASSWORD RESET EMAIL
+// ==========================================================
+
+exports.sendCustomPasswordReset = functions.https.onCall(
+  async (data, context) => {
+    try {
+      const { email } = data;
+
+      if (!email) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Email is required."
+        );
+      }
+
+      // Generate official Firebase reset link
+      const actionCodeSettings = {
+        url: "https://nabta-seniors.netlify.app/Login",
+        handleCodeInApp: false,
+      };
+
+    const resetLink = await admin
+      .auth()
+      .generatePasswordResetLink(email, actionCodeSettings);
+
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: {
+          user: gmailUser,
+          pass: gmailPass,
+        },
+      });
+
+      await transporter.verify();
+
+      const mailOptions = {
+        from: `Nabta-System <${gmailUser}>`,
+        to: email,
+        subject: "Reset Your Nabta-System Password",
+        html: `
+        <div style="font-family: Arial; font-size:16px; background:#fff8f1; padding:20px;">
+          
+          <a href="https://nabta-seniors.netlify.app/" target="_blank">
+            <img 
+              src="https://firebasestorage.googleapis.com/v0/b/gp-hu-42ca5.firebasestorage.app/o/%D9%8A%D8%B3%20(1).png?alt=media&token=6cf4c7b3-2956-456d-a23c-d16719d2e6ad"
+              width="160"
+              alt="Nabta-System Logo"
+              style="display:block; margin-bottom:20px;"
+            />
+          </a>
+
+          <p>Hello,</p>
+
+          <p>We received a request to reset your password.</p>
+
+          <p>
+            <a href="${resetLink}" 
+              style="background-color:#fc0038; color:#fff; padding:12px 24px; text-decoration:none; border-radius:6px;">
+              Reset Password
+            </a>
+          </p>
+
+          <p>If you didn’t request this, you can ignore this email.</p>
+
+          <p>Best regards,<br><strong>The Nabta-System Team</strong></p>
+        </div>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      return { success: true };
+
+    } catch (error) {
+      console.error("Reset email error:", error);
+
+      throw new functions.https.HttpsError(
+        "internal",
+        error.message
+      );
+    }
+  }
+);

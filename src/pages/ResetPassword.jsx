@@ -74,7 +74,7 @@ export default function ResetPassword() {
 
           <div className="Reset-footer">
             Back to login?{" "}
-            <span onClick={() => navigate("/")}>Sign in</span>
+            <span onClick={() => navigate("/Login")}>Sign in</span>
           </div>
 
         </div>
