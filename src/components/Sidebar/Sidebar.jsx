@@ -1,17 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import "./Sidebar.css";
-import logo from "../assets/images/Logo.svg";
-import plantIcon from "../assets/images/plant-icon.png";
-import plantIconActive from "../assets/images/plant-icon-active.png";
-import aiIconInactive from "../assets/images/hubot-svgrepo-com.svg";
-import aiIcon from "../assets/images/hubot-svgrepo-com (3).svg";
-import historyIconInactive from "../assets/images/history-svgrepo-com.svg";
-import historyIcon from "../assets/images/history-svgrepo-com (2).svg";
-import profileIconInactive from "../assets/images/profile-svgrepo-com.svg";
-import profileIcon from "../assets/images/profile-svgrepo-com (1).svg";
-import logoutIcon from "../assets/images/logout.svg";
+import logo from "../../assets/images/Logo.svg";
+import plantIcon from "../../assets/images/plant-icon.png";
+import plantIconActive from "../../assets/images/plant-icon-active.png";
+import aiIconInactive from "../../assets/images/hubot-svgrepo-com.svg";
+import aiIcon from "../../assets/images/hubot-svgrepo-com (3).svg";
+import historyIconInactive from "../../assets/images/history-svgrepo-com.svg";
+import historyIcon from "../../assets/images/history-svgrepo-com (2).svg";
+import profileIconInactive from "../../assets/images/profile-svgrepo-com.svg";
+import profileIcon from "../../assets/images/profile-svgrepo-com (1).svg";
+import logoutIcon from "../../assets/images/logout.svg";
 import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth } from "../../firebase";
 
 export default function Sidebar({ activePage, setActivePage }) {
   const navigate = useNavigate();

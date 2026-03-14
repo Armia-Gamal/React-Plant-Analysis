@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
-import PlantAnalysis from "./dashboard/PlantAnalysis";
-import AIAssistant from "./dashboard/AIAssistant";
-import History from "./dashboard/History";
-import Profile from "./dashboard/Profile";
+import Sidebar from "../Sidebar/Sidebar";
+import PlantAnalysis from "../../pages/dashboard/PlantAnalysis/PlantAnalysis";
+import AIAssistant from "../../pages/dashboard/AIAssistant/AIAssistant";
+import History from "../../pages/dashboard/History/History";
+import Profile from "../../pages/dashboard/Profile/Profile";
 import "./Dashboard.css";
 
 export default function Dashboard() {

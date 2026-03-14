@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./signup.css";
-import { auth, googleProvider, db, functions } from "../firebase";
+import { auth, googleProvider, db, functions } from "../../firebase";
 import {
   createUserWithEmailAndPassword,
   updateProfile,

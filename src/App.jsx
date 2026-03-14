@@ -1,21 +1,21 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Login from "./components/Login";
-import Signup from "./pages/signup";
-import ResetPassword from "./pages/ResetPassword";
+import Login from "./pages/Login/Login";
+import Signup from "./pages/signup/signup";
+import ResetPassword from "./pages/ResetPassword/ResetPassword";
 
-import Dashboard from "./pages/Dashboard";
-import AIAssistant from "./pages/dashboard/AIAssistant";
-import History from "./pages/dashboard/History";
-import Profile from "./pages/dashboard/Profile";
+import Dashboard from "./components/Dashboard/Dashboard";
+import AIAssistant from "./pages/dashboard/AIAssistant/AIAssistant";
+import History from "./pages/dashboard/History/History";
+import Profile from "./pages/dashboard/Profile/Profile";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 
-import PublicLayout from "./layouts/PublicLayout";
-import ProtectedLayout from "./layouts/ProtectedLayout";
-import LandingLayout from "./layouts/LandingLayout";
+import PublicLayout from "./components/layouts/PublicLayout";
+import ProtectedLayout from "./components/layouts/ProtectedLayout";
+import LandingLayout from "./components/layouts/LandingLayout";
 
-import Landing from "./pages/Landing";
+import Landing from "./pages/Landing/Landing";
 
 function App() {
   return (

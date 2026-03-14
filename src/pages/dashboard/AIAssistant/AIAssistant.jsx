@@ -5,7 +5,7 @@ import htmlToPdfmake from "html-to-pdfmake";
 import "./AIAssistant.css";
 
 // Import logo as base64 data URL for PDF generation (works in production)
-import nabtaLogo from "../../assets/images/New Project (1).png";
+import nabtaLogo from "../../../assets/images/New Project (1).png";
 
 // Load pdfMake from CDN to avoid bundler issues with vfs_fonts
 let pdfMakeReady = null;

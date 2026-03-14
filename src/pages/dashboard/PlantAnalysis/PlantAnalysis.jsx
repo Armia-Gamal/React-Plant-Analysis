@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
-import bgImage from "../../assets/images/OIP.jpg";
-import uploadImg from "../../assets/images/hoolding-leaf-svgrepo-com.svg";
-import detectImg from "../../assets/images/Gemini_Generate.png";
-import classImg from "../../assets/images/Crop.jpg";
-import segmentImg from "../../assets/images/opacity-planet.jpg";
+import bgImage from "../../../assets/images/OIP.jpg";
+import uploadImg from "../../../assets/images/hoolding-leaf-svgrepo-com.svg";
+import detectImg from "../../../assets/images/Gemini_Generate.png";
+import classImg from "../../../assets/images/Crop.jpg";
+import segmentImg from "../../../assets/images/opacity-planet.jpg";
 import "./PlantAnalysis.css";
 
 export default function PlantAnalysis({ setStep, setProgressValue, onSendReport }) {
@@ -342,7 +342,7 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
     if (leafData === "all") {
       prompt = generateAllDiseasesPrompt();
     } else {
-      prompt = generateAllDiseasesPrompt(leafData);
+      prompt = generateAIPrompt(leafData);
     }
     
     if (onSendReport) {

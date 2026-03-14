@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import "../index.css";
+import "../../index.css";
 import "./Login.css";
-import image from "../assets/images/Image.png";
+import image from "../../assets/images/Image.png";
 
 import {
   signInWithEmailAndPassword,
@@ -12,7 +12,7 @@ import {
   browserSessionPersistence
 } from "firebase/auth";
 
-import { auth, googleProvider } from "../firebase";
+import { auth, googleProvider } from "../../firebase";
 
 export default function Login() {
   const navigate = useNavigate();
