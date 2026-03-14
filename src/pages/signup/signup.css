@@ -2,7 +2,7 @@
   margin: 10px;
   height: 446px;
   border-radius: 24px;
-  background-image: url("../assets/images/sign-up.png");
+  background-image: url("../../assets/images/sign-up.png");
   background-size: cover;
   background-position: center;
   display: flex;
@@ -133,20 +133,28 @@
 }
 
 
-.signup-social {
-  margin-bottom: 18px;
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-}
-
-.signup-social i {
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+.signup-google-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  font-size: 17px;
+  font-weight: 600;
+  padding: 12px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.signup-google-btn:hover:not(:disabled) {
+  background-color: #f8fafc;
+}
+
+.signup-google-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }

@@ -9,7 +9,6 @@ import historyIconInactive from "../../assets/images/history-svgrepo-com.svg";
 import historyIcon from "../../assets/images/history-svgrepo-com (2).svg";
 import profileIconInactive from "../../assets/images/profile-svgrepo-com.svg";
 import profileIcon from "../../assets/images/profile-svgrepo-com (1).svg";
-import logoutIcon from "../../assets/images/logout.svg";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase";
 
@@ -84,14 +83,22 @@ export default function Sidebar({ activePage, setActivePage }) {
         </ul>
       </div>
 
-      {/* ===== Logout Bottom ===== */}
-      <div className="logout-section">
-        <li className="logout-item" onClick={handleLogout}>
-          <div className="menu-icon logout-icon">
-            <img src={logoutIcon} alt="Logout" />
-          </div>
-          <span>Logout</span>
-        </li>
+      {/* ===== Sign Out Bottom ===== */}
+      <div className="sidebar-footer" onClick={handleLogout}>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+        <span>Sign Out</span>
       </div>
 
     </aside>

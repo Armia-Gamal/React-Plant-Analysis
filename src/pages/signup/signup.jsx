@@ -111,15 +111,25 @@ export default function Signup() {
         <div className="signup-card">
           <h2>Register with</h2>
 
-          <div className="signup-social">
-            <i className="fa-brands fa-facebook-f"></i>
-            <i className="fa-brands fa-apple"></i>
-            <i
-              className="fa-brands fa-google"
-              onClick={handleGoogleSignup}
-              style={{ cursor: "pointer" }}
-            ></i>
-          </div>
+          <button
+            type="button"
+            className="signup-google-btn"
+            onClick={handleGoogleSignup}
+            disabled={loading}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 48 48"
+              width="20"
+              height="20"
+            >
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.6l6.9-6.9C35.89 2.3 30.34 0 24 0 14.62 0 6.54 5.48 2.63 13.44l8.04 6.24C12.4 13.02 17.72 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.5 24.5c0-1.66-.15-3.26-.42-4.8H24v9.1h12.7c-.55 2.96-2.22 5.47-4.73 7.15l7.27 5.65C43.95 37.7 46.5 31.7 46.5 24.5z"/>
+              <path fill="#FBBC05" d="M10.67 28.68a14.6 14.6 0 010-9.36l-8.04-6.24A23.97 23.97 0 000 24c0 3.86.92 7.52 2.63 10.92l8.04-6.24z"/>
+              <path fill="#34A853" d="M24 48c6.34 0 11.66-2.1 15.55-5.73l-7.27-5.65c-2.02 1.35-4.62 2.15-8.28 2.15-6.28 0-11.6-3.52-13.33-8.68l-8.04 6.24C6.54 42.52 14.62 48 24 48z"/>
+            </svg>
+            Sign up with Google
+          </button>
 
           <div className="signup-divider">
             <span>Or</span>

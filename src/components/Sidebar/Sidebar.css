@@ -12,27 +12,28 @@
   justify-content: space-between; 
 }
 
-.logout-section {
-  margin-bottom: 20px;
-}
-
-.logout-item {
+.sidebar-footer {
+  margin-top: auto;
+  margin-left: -20px;
+  margin-right: -20px;
+  margin-bottom: -25px;
+  padding: 18px 20px;
+  border-top: 1px solid #e6e6e6;
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 10px;
-  border-radius: 13px;
+  gap: 10px;
+  color: #6b7a90;
   cursor: pointer;
-  transition: 0.3s;
-  color: #DC2626;
+  font-size: 15px;
 }
 
-.logout-item:hover {
-  background-color: #FEE2E2;
+.sidebar-footer:hover {
+  background: #eceff4;
 }
 
-.logout-icon {
-  background-color: #FEE2E2;
+.sidebar-footer svg {
+  width: 20px;
+  height: 20px;
 }
 
 .sidebar-header {
