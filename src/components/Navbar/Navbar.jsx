@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import "../../index.css";
 import "./Navbar.css";
 import logo from "../../assets/images/Logo.svg";
+import arabicLogo from "../../assets/images/lllls.png";
 import languageIcon from "../../assets/images/language-svgrepo-com.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "../../context/LanguageContext";
@@ -62,7 +63,7 @@ export default function Navbar() {
   return (
     <nav className="navbar" dir={language === "ar" ? "rtl" : "ltr"}>
       <div className="nav-logo">
-        <img src={logo} alt="logo" />
+        <img src={language === "ar" ? arabicLogo : logo} alt="logo" />
       </div>
 
       <ul className="nav-links">
