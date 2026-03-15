@@ -78,6 +78,1019 @@ pdfMake.fonts = {
 
 marked.setOptions({ breaks: true });
 
+const ARABIC_TEXT_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFC]/;
+const DIRECTIONAL_MARKS_REGEX = /[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
+const PRIVATE_USE_GLYPHS_REGEX = /[\uE000-\uF8FF\u{F0000}-\u{FFFFD}\u{100000}-\u{10FFFD}]/gu;
+const WORD_CHARACTER_REGEX = /[\u0600-\u06FFA-Za-z0-9]/;
+const NO_SPACE_BEFORE_REGEX = /^[,.;:!?%،؛)\]}»]/;
+const NO_SPACE_AFTER_REGEX = /[([{«]$/;
+const RTL_GROUP_OPENERS = {
+  "(": ")",
+  "[": "]",
+  "{": "}",
+  "«": "»"
+};
+
+const PDF_MARKDOWN_REPLACEMENTS = {
+  ar: {
+    immediateActions: "إجراءات فورية",
+    pruning: "تقليم",
+    recommendedTreatment: "العلاج الموصى به",
+    treatmentSchedule: "الجدول الزمني",
+    protectionMeasures: "إجراءات الحماية",
+    environmentalFactors: "العوامل البيئية",
+    ventilation: "التهوية",
+    properSpacing: "التباعد المناسب",
+    irrigationManagement: "إدارة الري",
+    fertilizationStrategy: "استراتيجية التسميد",
+    sanitationPractices: "ممارسات النظافة",
+    monitoringPlan: "خطة المتابعة",
+    diseaseSpread: "انتشار المرض"
+  },
+  en: {
+    immediateActions: "Immediate Actions",
+    pruning: "Pruning",
+    recommendedTreatment: "Recommended Treatment",
+    treatmentSchedule: "Treatment Schedule",
+    protectionMeasures: "Protection Measures",
+    environmentalFactors: "Environmental Factors",
+    ventilation: "Ventilation",
+    properSpacing: "Proper Spacing",
+    irrigationManagement: "Irrigation Management",
+    fertilizationStrategy: "Fertilization Strategy",
+    sanitationPractices: "Sanitation Practices",
+    monitoringPlan: "Monitoring Plan",
+    diseaseSpread: "Disease Spread"
+  }
+};
+
+function detectArabic(value = "") {
+  return ARABIC_TEXT_REGEX.test(String(value));
+}
+
+function escapeRegExp(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightHtmlMatches(html, query, options = {}) {
+  const normalizedQuery = String(query ?? "").trim();
+  if (!normalizedQuery || typeof document === "undefined") {
+    return html;
+  }
+
+  const { activeIndex = -1, counterRef } = options;
+
+  const regex = new RegExp(`(${escapeRegExp(normalizedQuery)})`, "gi");
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  const highlightTextNode = (textNode) => {
+    const sourceText = textNode.nodeValue || "";
+    if (!sourceText.trim()) {
+      return;
+    }
+
+    if (!regex.test(sourceText)) {
+      regex.lastIndex = 0;
+      return;
+    }
+
+    regex.lastIndex = 0;
+    const fragment = document.createDocumentFragment();
+    let lastIndex = 0;
+
+    sourceText.replace(regex, (match, _group, offset) => {
+      if (offset > lastIndex) {
+        fragment.appendChild(document.createTextNode(sourceText.slice(lastIndex, offset)));
+      }
+
+      const markIndex = counterRef ? counterRef.value : -1;
+      if (counterRef) {
+        counterRef.value += 1;
+      }
+
+      const mark = document.createElement("mark");
+      mark.className = markIndex === activeIndex
+        ? "chat-search-highlight chat-search-highlight--active"
+        : "chat-search-highlight";
+      if (markIndex >= 0) {
+        mark.setAttribute("data-search-index", String(markIndex));
+      }
+      mark.textContent = match;
+      fragment.appendChild(mark);
+      lastIndex = offset + match.length;
+
+      return match;
+    });
+
+    if (lastIndex < sourceText.length) {
+      fragment.appendChild(document.createTextNode(sourceText.slice(lastIndex)));
+    }
+
+    if (textNode.parentNode) {
+      textNode.parentNode.replaceChild(fragment, textNode);
+    }
+  };
+
+  const walkNodes = (node) => {
+    if (!node) {
+      return;
+    }
+
+    if (node.nodeType === 3) {
+      highlightTextNode(node);
+      return;
+    }
+
+    if (node.nodeType !== 1) {
+      return;
+    }
+
+    const tagName = node.tagName?.toLowerCase();
+    if (tagName === "script" || tagName === "style" || tagName === "mark") {
+      return;
+    }
+
+    Array.from(node.childNodes).forEach((childNode) => {
+      walkNodes(childNode);
+    });
+  };
+
+  walkNodes(container);
+  return container.innerHTML;
+}
+
+function getPdfFontPair(isArabicDocument) {
+  const preferredFont = isArabicDocument
+    ? hasCairoFonts
+      ? "Cairo"
+      : hasRobotoFonts
+        ? "Roboto"
+        : undefined
+    : hasRobotoFonts
+      ? "Roboto"
+      : hasCairoFonts
+        ? "Cairo"
+        : undefined;
+
+  const fallbackFont = preferredFont === "Roboto"
+    ? hasCairoFonts
+      ? "Cairo"
+      : undefined
+    : hasRobotoFonts
+      ? "Roboto"
+      : undefined;
+
+  return { preferredFont, fallbackFont };
+}
+
+function shouldInsertFragmentSpace(previousText, nextText) {
+  if (!previousText || !nextText) {
+    return false;
+  }
+
+  if (/\s$/.test(previousText) || /^\s/.test(nextText)) {
+    return false;
+  }
+
+  if (NO_SPACE_AFTER_REGEX.test(previousText) || NO_SPACE_BEFORE_REGEX.test(nextText)) {
+    return false;
+  }
+
+  return WORD_CHARACTER_REGEX.test(previousText.slice(-1)) && WORD_CHARACTER_REGEX.test(nextText[0]);
+}
+
+function joinTextFragments(fragments, separator = "") {
+  return fragments.reduce((combinedText, fragment) => {
+    const textFragment = String(fragment ?? "");
+
+    if (!textFragment) {
+      return combinedText;
+    }
+
+    if (!combinedText) {
+      return textFragment;
+    }
+
+    if (separator) {
+      return `${combinedText}${separator}${textFragment}`;
+    }
+
+    return shouldInsertFragmentSpace(combinedText, textFragment)
+      ? `${combinedText} ${textFragment}`
+      : `${combinedText}${textFragment}`;
+  }, "");
+}
+
+function prependInlineFragmentText(fragment, prefix) {
+  if (!prefix) {
+    return fragment;
+  }
+
+  if (typeof fragment === "string") {
+    return `${prefix}${fragment}`;
+  }
+
+  if (fragment && typeof fragment === "object") {
+    if (typeof fragment.text === "string") {
+      return {
+        ...fragment,
+        text: `${prefix}${fragment.text}`
+      };
+    }
+
+    if (Array.isArray(fragment.text) && fragment.text.length > 0) {
+      const [firstItem, ...restItems] = fragment.text;
+
+      return {
+        ...fragment,
+        text: [prependInlineFragmentText(firstItem, prefix), ...restItems]
+      };
+    }
+  }
+
+  return fragment;
+}
+
+function getInlineStyleProps(fragment) {
+  if (!fragment || typeof fragment !== "object") {
+    return {};
+  }
+
+  const { text: _text, ...styleProps } = fragment;
+  return styleProps;
+}
+
+function flattenInlineFragments(value, inheritedProps = {}) {
+  if (value === null || value === undefined || value === "") {
+    return [];
+  }
+
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return [{ text: String(value), props: inheritedProps }];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => flattenInlineFragments(entry, inheritedProps));
+  }
+
+  if (typeof value === "object") {
+    if (Object.prototype.hasOwnProperty.call(value, "text")) {
+      return flattenInlineFragments(value.text, {
+        ...inheritedProps,
+        ...getInlineStyleProps(value)
+      });
+    }
+
+    const fallbackText = extractText(value);
+    return fallbackText ? [{ text: fallbackText, props: inheritedProps }] : [];
+  }
+
+  return [{ text: String(value), props: inheritedProps }];
+}
+
+function tokenizeSegmentPreserveGroups(text) {
+  const tokens = [];
+  let currentToken = "";
+  const expectedClosers = [];
+
+  const pushCurrentToken = () => {
+    const trimmedToken = currentToken.trim();
+    if (trimmedToken) {
+      tokens.push(trimmedToken);
+    }
+
+    currentToken = "";
+  };
+
+  for (const character of String(text ?? "")) {
+    if (!expectedClosers.length && /\s/.test(character)) {
+      pushCurrentToken();
+      continue;
+    }
+
+    currentToken += character;
+
+    if (RTL_GROUP_OPENERS[character]) {
+      expectedClosers.push(RTL_GROUP_OPENERS[character]);
+      continue;
+    }
+
+    if (expectedClosers.length && character === expectedClosers[expectedClosers.length - 1]) {
+      expectedClosers.pop();
+    }
+  }
+
+  pushCurrentToken();
+
+  return tokens;
+}
+
+function isLatinLikeToken(tokenText) {
+  const normalizedToken = String(tokenText ?? "").replace(/^[("'[\u00AB]+|[)"'\].,:;!?%\u00BB]+$/g, "");
+  return /[A-Za-z]/.test(normalizedToken) && !detectArabic(normalizedToken);
+}
+
+function mergeConsecutiveLatinTokens(tokens) {
+  return tokens.reduce((mergedTokens, token) => {
+    const previousToken = mergedTokens[mergedTokens.length - 1];
+    const sameStyle =
+      previousToken &&
+      JSON.stringify(previousToken.props || {}) === JSON.stringify(token.props || {});
+
+    if (previousToken && sameStyle && isLatinLikeToken(previousToken.text) && isLatinLikeToken(token.text)) {
+      previousToken.text = `${previousToken.text} ${token.text}`;
+      return mergedTokens;
+    }
+
+    mergedTokens.push({ ...token });
+    return mergedTokens;
+  }, []);
+}
+
+function buildInlineFragmentFromToken(token, isLastToken, options) {
+  const normalizedTokenText = normalizeArabicMarkerToken(token.text);
+  const fragmentText = isLastToken ? normalizedTokenText : `${normalizedTokenText} `;
+  const fragmentFont = selectPdfFont(
+    normalizedTokenText,
+    options.preferredFont,
+    options.fallbackFont
+  );
+
+  return {
+    ...(token.props || {}),
+    text: fragmentText,
+    ...(!(token.props || {}).font && fragmentFont ? { font: fragmentFont } : {})
+  };
+}
+
+function reorderArabicInlineFragments(textItems, options) {
+  const flattenedFragments = flattenInlineFragments(textItems);
+  const lines = [[]];
+
+  flattenedFragments.forEach((fragment) => {
+    const parts = String(fragment.text ?? "").split("\n");
+
+    parts.forEach((part, partIndex) => {
+      const tokens = tokenizeSegmentPreserveGroups(part).map((tokenText) => ({
+        text: tokenText,
+        props: fragment.props || {}
+      }));
+
+      if (tokens.length) {
+        lines[lines.length - 1].push(...tokens);
+      }
+
+      if (partIndex < parts.length - 1) {
+        lines.push([]);
+      }
+    });
+  });
+
+  return lines.flatMap((lineTokens, lineIndex) => {
+    const hasArabicLine = detectArabic(joinTextFragments(lineTokens.map((token) => token.text), " "));
+    const orderedTokens = hasArabicLine
+      ? mergeConsecutiveLatinTokens(lineTokens).reverse()
+      : lineTokens;
+
+    const lineFragments = orderedTokens.map((token, tokenIndex) =>
+      buildInlineFragmentFromToken(token, tokenIndex === orderedTokens.length - 1, options)
+    );
+
+    if (lineIndex === lines.length - 1) {
+      return lineFragments;
+    }
+
+    if (!lineFragments.length) {
+      return [{ text: "\n" }];
+    }
+
+    const lastFragment = lineFragments[lineFragments.length - 1];
+    lineFragments[lineFragments.length - 1] = {
+      ...lastFragment,
+      text: `${lastFragment.text}\n`
+    };
+
+    return lineFragments;
+  });
+}
+
+function normalizeInlineArray(textItems, options) {
+  const normalizedFragments = textItems.flatMap((item) => {
+    if (item === null || item === undefined || item === "") {
+      return [];
+    }
+
+    if (typeof item === "string") {
+      return [shapePdfText(item, options.isArabicDocument)];
+    }
+
+    if (Array.isArray(item)) {
+      return normalizeInlineArray(item, options);
+    }
+
+    if (typeof item === "object") {
+      if (Object.prototype.hasOwnProperty.call(item, "text")) {
+        const normalizedItem = { ...item };
+        normalizedItem.text = normalizeInlineText(item.text, options);
+
+        const inlineFont = selectPdfFont(
+          normalizedItem.text,
+          options.preferredFont,
+          options.fallbackFont
+        );
+
+        if (inlineFont && !normalizedItem.font) {
+          normalizedItem.font = inlineFont;
+        }
+
+        return [normalizedItem];
+      }
+
+      const fallbackText = shapePdfText(extractText(item), options.isArabicDocument);
+      if (!fallbackText) {
+        return [];
+      }
+
+      return [
+        {
+          text: fallbackText,
+          font: selectPdfFont(fallbackText, options.preferredFont, options.fallbackFont)
+        }
+      ];
+    }
+
+    return [shapePdfText(String(item), options.isArabicDocument)];
+  }).filter(Boolean);
+
+  return normalizedFragments.reduce((fragments, fragment) => {
+    const previousFragment = fragments[fragments.length - 1];
+    const previousText = previousFragment ? extractText(previousFragment) : "";
+    const currentText = extractText(fragment);
+
+    if (shouldInsertFragmentSpace(previousText, currentText)) {
+      fragments.push(prependInlineFragmentText(fragment, " "));
+      return fragments;
+    }
+
+    fragments.push(fragment);
+    return fragments;
+  }, []);
+}
+
+function extractText(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return joinTextFragments(value.map((item) => extractText(item)));
+  }
+
+  if (typeof value === "object") {
+    if (Object.prototype.hasOwnProperty.call(value, "text")) {
+      return extractText(value.text);
+    }
+
+    if (Array.isArray(value.stack)) {
+      return joinTextFragments(value.stack.map((item) => extractText(item)), " ");
+    }
+
+    if (Array.isArray(value.columns)) {
+      return joinTextFragments(value.columns.map((item) => extractText(item)), " ");
+    }
+
+    if (Array.isArray(value.ul)) {
+      return joinTextFragments(value.ul.map((item) => extractText(item)), " ");
+    }
+
+    if (Array.isArray(value.ol)) {
+      return joinTextFragments(value.ol.map((item) => extractText(item)), " ");
+    }
+  }
+
+  return "";
+}
+
+function selectPdfFont(value, preferredFont, fallbackFont) {
+  const rawText = extractText(value);
+
+  if (detectArabic(rawText)) {
+    return hasCairoFonts ? "Cairo" : preferredFont || fallbackFont;
+  }
+
+  return hasRobotoFonts ? "Roboto" : preferredFont || fallbackFont;
+}
+
+function normalizeArabicMarkerToken(token) {
+  return String(token ?? "").replace(/^(\d+)\.$/, ".$1");
+}
+
+function reorderArabicLine(value) {
+  const normalizedLine = String(value ?? "")
+    .replace(/\*\*\s*:\s*\*\*/g, ":")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/(^|\s)(\d+)\s*\.\s+/g, "$1$2. ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!normalizedLine || !detectArabic(normalizedLine)) {
+    return normalizedLine;
+  }
+
+  return mergeConsecutiveLatinTokens(
+    tokenizeSegmentPreserveGroups(normalizedLine).map((tokenText) => ({ text: tokenText, props: {} }))
+  )
+    .reverse()
+    .map((token) => normalizeArabicMarkerToken(token.text))
+    .join(" ");
+}
+
+function reorderArabicTextBlock(value) {
+  return String(value ?? "")
+    .split("\n")
+    .map((line) => reorderArabicLine(line))
+    .join("\n");
+}
+
+function shapePdfText(value, isArabicDocument) {
+  const normalizedText = String(value ?? "")
+    .replace(/\u00A0/g, " ")
+    .replace(DIRECTIONAL_MARKS_REGEX, "")
+    .replace(PRIVATE_USE_GLYPHS_REGEX, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n");
+
+  if (!normalizedText.trim()) {
+    return "";
+  }
+
+  if (!isArabicDocument || !detectArabic(normalizedText)) {
+    return normalizedText;
+  }
+
+  return reorderArabicTextBlock(normalizedText);
+}
+
+function cleanMarkdown(markdown, pdfLanguage) {
+  const replacementLabels = PDF_MARKDOWN_REPLACEMENTS[pdfLanguage] || PDF_MARKDOWN_REPLACEMENTS.en;
+
+  const cleanedMarkdown = String(markdown ?? "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00A0/g, " ")
+    .replace(/🌿/gu, "")
+    .replace(/🌱/gu, "")
+    .replace(/📊/gu, "")
+    .replace(/📈/gu, "")
+    .replace(/📋/gu, "")
+    .replace(/📌/gu, "")
+    .replace(/⚠️?/gu, "")
+    .replace(/🧠/gu, "")
+    .replace(/🛑/gu, replacementLabels.immediateActions)
+    .replace(/✂️?/gu, replacementLabels.pruning)
+    .replace(/🧪/gu, replacementLabels.recommendedTreatment)
+    .replace(/📅/gu, replacementLabels.treatmentSchedule)
+    .replace(/🛡️?/gu, replacementLabels.protectionMeasures)
+    .replace(/🌦️?/gu, replacementLabels.environmentalFactors)
+    .replace(/🌬️?/gu, replacementLabels.ventilation)
+    .replace(/📏/gu, replacementLabels.properSpacing)
+    .replace(/💦/gu, replacementLabels.irrigationManagement)
+    .replace(/🌾/gu, replacementLabels.fertilizationStrategy)
+    .replace(/🧼/gu, replacementLabels.sanitationPractices)
+    .replace(/🧑‍🌾/gu, replacementLabels.monitoringPlan)
+    .replace(/🔄/gu, replacementLabels.diseaseSpread)
+    .replace(/1️⃣/gu, "1.")
+    .replace(/2️⃣/gu, "2.")
+    .replace(/3️⃣/gu, "3.")
+    .replace(/4️⃣/gu, "4.")
+    .replace(/5️⃣/gu, "5.")
+    .replace(/6️⃣/gu, "6.")
+    .replace(/7️⃣/gu, "7.")
+    .replace(/8️⃣/gu, "8.")
+    .replace(/9️⃣/gu, "9.")
+    .replace(/🔟/gu, "10.")
+    .replace(/\uFE0F/g, "")
+    .replace(/\uFEFF/g, "")
+    .replace(/\u20E3/g, "")
+    .replace(/[\u2028\u2029]/g, "")
+    .replace(/[\u200B\u200C\u200D]/g, "")
+    .replace(PRIVATE_USE_GLYPHS_REGEX, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "");
+
+  if (pdfLanguage === "en") {
+    return cleanedMarkdown
+      .replace(/\*\*\s+Soil/g, "**Soil")
+      .replace(/\*\*\s+Watering:/g, "**Watering")
+      .replace(/\*\*\s+Fertilization/g, "**Fertilization")
+      .trim();
+  }
+
+  return cleanedMarkdown
+    .replace(/\*\*\s*([^*][\s\S]*?)\s*\*\*/g, (match, innerText) => {
+      const normalizedInnerText = String(innerText ?? "").trim();
+      return normalizedInnerText ? `**${normalizedInnerText}**` : match;
+    })
+    .replace(/\*\*\s*:\s*\*\*/g, ":")
+    .replace(/\*\*\s+([^\s*])/g, "**$1")
+    .replace(/(\*\*[^*\n]+:\*\*)(?=\S)/g, "$1 ")
+    .replace(/(^|\n)\s*(\d+)\s*\.\s+/g, "$1$2. ")
+    .replace(/([^\n])(\n[-*]\s)/g, "$1\n$2")
+    .replace(/([^\n])(\n\d+\.\s)/g, "$1\n$2")
+    .trim();
+}
+
+function normalizeInlineText(textValue, options) {
+  if (typeof textValue === "string") {
+    return shapePdfText(textValue, options.isArabicDocument);
+  }
+
+  if (Array.isArray(textValue)) {
+    if (options.isArabicDocument && detectArabic(extractText(textValue))) {
+      return reorderArabicInlineFragments(textValue, options);
+    }
+
+    return normalizeInlineArray(textValue, options);
+  }
+
+  if (textValue && typeof textValue === "object") {
+    return shapePdfText(extractText(textValue), options.isArabicDocument);
+  }
+
+  return shapePdfText(String(textValue ?? ""), options.isArabicDocument);
+}
+
+function applyPdfNodeStyles(node, options) {
+  const nodeText = extractText(node.text ?? node.stack ?? node.columns ?? node.table);
+  const resolvedFont = selectPdfFont(nodeText, options.preferredFont, options.fallbackFont);
+
+  if (resolvedFont && !node.font) {
+    node.font = resolvedFont;
+  }
+
+  if (options.isArabicDocument) {
+    node.alignment = node.alignment || "right";
+    node.preserveLeadingSpaces = true;
+  } else if (!node.alignment && (node.text || node.stack || node.columns)) {
+    node.alignment = "left";
+  }
+
+  return node;
+}
+
+function extractListItemText(item) {
+  if (typeof item === "string") {
+    return item;
+  }
+
+  if (Array.isArray(item)) {
+    return joinTextFragments(item.map((entry) => extractListItemText(entry)), " ").trim();
+  }
+
+  if (!item || typeof item !== "object") {
+    return String(item ?? "");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(item, "text")) {
+    return extractText(item.text).trim();
+  }
+
+  if (Array.isArray(item.stack)) {
+    return joinTextFragments(
+      item.stack
+        .filter((entry) => !(entry && typeof entry === "object" && (entry.ul || entry.ol)))
+        .map((entry) => extractText(entry)),
+      " "
+    ).trim();
+  }
+
+  return extractText(item).trim();
+}
+
+function buildListNodes(items, options, ordered = false, level = 0) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.flatMap((item, index) => {
+    const itemText = shapePdfText(extractListItemText(item), options.isArabicDocument);
+    const markerText = ordered
+      ? options.isArabicDocument
+        ? `.${index + 1}`
+        : `${index + 1}.`
+      : "\u2022";
+    const markerColumn = {
+      width: 16,
+      text: markerText,
+      alignment: "center",
+      font: selectPdfFont(markerText, options.preferredFont, options.fallbackFont) || options.preferredFont
+    };
+
+    const textColumn = applyPdfNodeStyles(
+      {
+        width: "*",
+        text: itemText
+      },
+      options
+    );
+
+    const listRow = itemText
+      ? {
+          columns: options.isArabicDocument
+            ? [textColumn, markerColumn]
+            : [markerColumn, textColumn],
+          columnGap: 6,
+          margin: options.isArabicDocument
+            ? [0, 4, level * 14, 4]
+            : [level * 14, 4, 0, 4]
+        }
+      : null;
+
+    const nestedListNodes = [];
+    if (item && typeof item === "object" && Array.isArray(item.stack)) {
+      item.stack.forEach((stackItem) => {
+        if (stackItem?.ul || stackItem?.ol) {
+          nestedListNodes.push(...fixBulletNodes([stackItem], options, level + 1));
+        }
+      });
+    }
+
+    return listRow ? [listRow, ...nestedListNodes] : nestedListNodes;
+  });
+}
+
+function normalizePdfNode(node, options, level = 0) {
+  if (node === null || node === undefined) {
+    return null;
+  }
+
+  if (Array.isArray(node)) {
+    return { stack: fixBulletNodes(node, options, level) };
+  }
+
+  if (typeof node === "string") {
+    const text = shapePdfText(node, options.isArabicDocument);
+    if (!text) {
+      return null;
+    }
+
+    return applyPdfNodeStyles({ text }, options);
+  }
+
+  if (typeof node !== "object") {
+    const text = shapePdfText(String(node), options.isArabicDocument);
+    return text ? applyPdfNodeStyles({ text }, options) : null;
+  }
+
+  if (node.ul) {
+    return { stack: buildListNodes(node.ul, options, false, level) };
+  }
+
+  if (node.ol) {
+    return { stack: buildListNodes(node.ol, options, true, level) };
+  }
+
+  const normalizedNode = { ...node };
+
+  if (Object.prototype.hasOwnProperty.call(node, "text")) {
+    normalizedNode.text = normalizeInlineText(node.text, options);
+  }
+
+  if (Array.isArray(node.stack)) {
+    normalizedNode.stack = fixBulletNodes(node.stack, options, level);
+  }
+
+  if (Array.isArray(node.columns)) {
+    normalizedNode.columns = node.columns
+      .map((column) => normalizePdfNode(column, options, level + 1))
+      .filter(Boolean)
+      .map((column) => (Array.isArray(column) ? { stack: column } : column));
+  }
+
+  if (node.table?.body) {
+    normalizedNode.table = {
+      ...node.table,
+      body: node.table.body.map((row) =>
+        row.map((cell) => {
+          const normalizedCell = normalizePdfNode(cell, options, level + 1);
+          if (Array.isArray(normalizedCell)) {
+            return { stack: normalizedCell };
+          }
+
+          return normalizedCell || "";
+        })
+      )
+    };
+  }
+
+  return applyPdfNodeStyles(normalizedNode, options);
+}
+
+function fixBulletNodes(nodes, options, level = 0) {
+  const normalizedNodes = Array.isArray(nodes) ? nodes : [nodes];
+
+  return normalizedNodes.flatMap((node) => {
+    if (node && typeof node === "object" && node.ul) {
+      return buildListNodes(node.ul, options, false, level);
+    }
+
+    if (node && typeof node === "object" && node.ol) {
+      return buildListNodes(node.ol, options, true, level);
+    }
+
+    const normalizedNode = normalizePdfNode(node, options, level);
+
+    if (!normalizedNode) {
+      return [];
+    }
+
+    return Array.isArray(normalizedNode) ? normalizedNode : [normalizedNode];
+  });
+}
+
+async function toBase64(url) {
+  try {
+    const response = await fetch(url, { mode: "cors" });
+    const blob = await response.blob();
+
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+
+      image.onerror = () => resolve("");
+      image.src = url;
+    });
+  }
+}
+
+function buildPdfDefinition({
+  pdfText,
+  pdfIsArabic,
+  preferredFont,
+  fallbackFont,
+  logoBase64,
+  generatedAt,
+  contentNodes
+}) {
+  const titleFont = selectPdfFont(pdfText.pdfTitle, preferredFont, fallbackFont) || preferredFont;
+  const metaText = `${pdfText.generatedOn} ${generatedAt}`;
+  const metaFont = selectPdfFont(metaText, preferredFont, fallbackFont) || preferredFont;
+
+  const titleStackColumn = {
+    width: "*",
+    stack: [
+      {
+        text: shapePdfText(pdfText.pdfTitle, pdfIsArabic),
+        font: titleFont,
+        fontSize: 22,
+        bold: true,
+        alignment: logoBase64 ? "center" : "left"
+      },
+      {
+        margin: [0, 8, 0, 8],
+        canvas: [
+          {
+            type: "rect",
+            x: pdfIsArabic ? 0 : -140,
+            y: -20,
+            w: 500,
+            h: 6,
+            color: "#DC2626"
+          }
+        ]
+      },
+      {
+        text: shapePdfText(metaText, pdfIsArabic),
+        font: metaFont,
+        fontSize: 10,
+        color: "gray",
+        margin: [0, 5, 0, 5],
+        alignment: logoBase64 ? "center" : "left"
+      }
+    ]
+  };
+
+  const logoColumn = logoBase64
+    ? {
+        image: logoBase64,
+        width: 130,
+        ...(pdfIsArabic ? { relativePosition: { x: -140, y: 0 } } : {})
+      }
+    : null;
+
+  return {
+    pageSize: "A4",
+    pageMargins: [40, 110, 40, 60],
+    defaultStyle: {
+      ...(preferredFont ? { font: preferredFont } : {}),
+      fontSize: 11,
+      lineHeight: 1.6,
+      alignment: pdfIsArabic ? "right" : "left",
+      preserveLeadingSpaces: true
+    },
+    header: {
+      margin: [40, 24, 40, 12],
+      columns: pdfIsArabic
+        ? [titleStackColumn, ...(logoColumn ? [logoColumn] : [])]
+        : [...(logoColumn ? [logoColumn] : []), titleStackColumn],
+      columnGap: 16
+    },
+    footer(currentPage, pageCount) {
+      const pageText = pdfText.pageOf
+        .replace("{{current}}", String(currentPage))
+        .replace("{{total}}", String(pageCount));
+
+      return {
+        margin: [40, 8, 40, 20],
+        columns: pdfIsArabic
+          ? [
+              {
+                text: shapePdfText(pageText, true),
+                alignment: "left",
+                fontSize: 8,
+                color: "#6B7280",
+                font: selectPdfFont(pageText, preferredFont, fallbackFont) || preferredFont
+              },
+              {
+                text: shapePdfText(pdfText.assistantName, true),
+                alignment: "right",
+                fontSize: 8,
+                color: "#6B7280",
+                font: selectPdfFont(pdfText.assistantName, preferredFont, fallbackFont) || preferredFont
+              }
+            ]
+          : [
+              {
+                text: pdfText.assistantName,
+                alignment: "left",
+                fontSize: 8,
+                color: "#6B7280",
+                font: selectPdfFont(pdfText.assistantName, preferredFont, fallbackFont) || preferredFont
+              },
+              {
+                text: pageText,
+                alignment: "right",
+                fontSize: 8,
+                color: "#6B7280",
+                font: selectPdfFont(pageText, preferredFont, fallbackFont) || preferredFont
+              }
+            ]
+      };
+    },
+    content: [
+      {
+        stack: contentNodes
+      }
+    ],
+    styles: {
+      h1: {
+        fontSize: 20,
+        bold: true,
+        margin: [0, 16, 0, 8],
+        alignment: pdfIsArabic ? "right" : "left"
+      },
+      h2: {
+        fontSize: 16,
+        bold: true,
+        margin: [0, 12, 0, 6],
+        alignment: pdfIsArabic ? "right" : "left"
+      },
+      h3: {
+        fontSize: 14,
+        bold: true,
+        margin: [0, 10, 0, 5],
+        alignment: pdfIsArabic ? "right" : "left"
+      }
+    }
+  };
+}
+
 const text = {
   en: {
     welcome: "Welcome to Nabta AI Assistant! 🌿 I am your personal botanist. How can I help your garden grow today? I can help with plant identification, care tips, or diagnosing diseases.",
@@ -85,6 +1098,7 @@ const text = {
     downloading: "Downloading...",
     loading: "Examining roots...",
     placeholder: "Ask about wilting leaves...",
+    noResults: "No matching chat messages",
     disclaimer: "Ask a plant 🌿 Nabta AI Assistant can make mistakes. Check important info.",
     pdfTitle: "Nabta AI Smart Plant Report",
     generatedOn: "Generated on:",
@@ -97,6 +1111,7 @@ const text = {
     downloading: "جاري التنزيل...",
     loading: "... فحص الجذور",
     placeholder: "اسأل عن ذبول الأوراق...",
+    noResults: "لا توجد رسائل مطابقة للبحث",
     disclaimer: "اسأل نبتة 🌿 قد يخطئ مساعد نبتة الذكي. راجع المعلومات المهمة.",
     pdfTitle: "تقرير نبتة الذكي لصحة النبات",
     generatedOn: "تاريخ الإنشاء:",
@@ -107,7 +1122,14 @@ const text = {
 
 const welcomeMessages = Object.values(text).map((entry) => entry.welcome);
 
-export default function AIAssistant({ pendingReport, onReportProcessed, newChatTrigger }) {
+export default function AIAssistant({
+  pendingReport,
+  onReportProcessed,
+  newChatTrigger,
+  searchQuery = "",
+  searchJumpRequest,
+  onSearchMatchStatsChange
+}) {
   const { language } = useLanguage();
   const t = text[language] || text.en;
 
@@ -150,7 +1172,7 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
       // migrate old storage if present
       const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("plantifipia_messages");
       return saved ? JSON.parse(saved) : initialMessages;
-    } catch (e) {
+    } catch {
       return initialMessages;
     }
   });
@@ -165,297 +1187,118 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
   const [activeRequestLanguage, setActiveRequestLanguage] = useState(null);
 
   const textareaRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const hasProcessedReportRef = useRef(false);
+  const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(0);
 
-  const isArabic = (text) => /[\u0600-\u06FF]/.test(text);
+  const isArabic = detectArabic;
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const filteredMessages = normalizedSearchQuery
+    ? messages.filter((msg) => {
+        const searchableText = [
+          msg.text,
+          msg.originalText,
+          msg.downloadLabel,
+          msg.downloadingLabel
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return searchableText.includes(normalizedSearchQuery);
+      })
+    : messages;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // create a professional PDF from markdown report
   const downloadPdf = async (markdownText, reportLanguage) => {
-  const pdfLanguage = reportLanguage || (isArabic(markdownText) ? "ar" : "en");
-  const pdfText = text[pdfLanguage] || text.en;
-  const pdfIsArabic = pdfLanguage === "ar";
-  const preferredFont = pdfIsArabic
-    ? (hasCairoFonts ? "Cairo" : (hasRobotoFonts ? "Roboto" : null))
-    : (hasRobotoFonts ? "Roboto" : (hasCairoFonts ? "Cairo" : null));
-  const fallbackFont = preferredFont === "Roboto"
-    ? (hasCairoFonts ? "Cairo" : null)
-    : (hasRobotoFonts ? "Roboto" : null);
-  const replacementLabels = pdfIsArabic
-    ? {
-        immediateActions: "إجراءات فورية",
-        pruning: "تقليم",
-        recommendedTreatment: "العلاج الموصى به",
-        treatmentSchedule: "الجدول الزمني",
-        protectionMeasures: "إجراءات الحماية",
-        environmentalFactors: "العوامل البيئية",
-        ventilation: "التهوية",
-        properSpacing: "التباعد المناسب",
-        irrigationManagement: "إدارة الري",
-        fertilizationStrategy: "استراتيجية التسميد",
-        sanitationPractices: "ممارسات النظافة",
-        monitoringPlan: "خطة المتابعة",
-        diseaseSpread: "انتشار المرض"
-      }
-    : {
-        immediateActions: "Immediate Actions",
-        pruning: "Pruning",
-        recommendedTreatment: "Recommended Treatment",
-        treatmentSchedule: "Treatment Schedule",
-        protectionMeasures: "Protection Measures",
-        environmentalFactors: "Environmental Factors",
-        ventilation: "Ventilation",
-        properSpacing: "Proper Spacing",
-        irrigationManagement: "Irrigation Management",
-        fertilizationStrategy: "Fertilization Strategy",
-        sanitationPractices: "Sanitation Practices",
-        monitoringPlan: "Monitoring Plan",
-        diseaseSpread: "Disease Spread"
-      };
+    const pdfLanguage = reportLanguage || (detectArabic(markdownText) ? "ar" : "en");
+    const pdfText = text[pdfLanguage] || text.en;
+    const pdfIsArabic = pdfLanguage === "ar";
+    const { preferredFont, fallbackFont } = getPdfFontPair(pdfIsArabic);
+    const cleanedMarkdown = cleanMarkdown(markdownText, pdfLanguage);
+    const html = marked.parse(cleanedMarkdown);
+    const convertedNodes = pdfIsArabic
+      ? htmlToPdfmake(html, {
+          defaultStyles: {
+            p: { margin: [0, 0, 0, 10] },
+            ul: { margin: [0, 4, 0, 10] },
+            ol: { margin: [0, 4, 0, 10] },
+            li: { margin: [0, 2, 0, 2] },
+            h1: { margin: [0, 16, 0, 8], bold: true, fontSize: 20 },
+            h2: { margin: [0, 12, 0, 6], bold: true, fontSize: 16 },
+            h3: { margin: [0, 10, 0, 5], bold: true, fontSize: 14 }
+          }
+        })
+      : htmlToPdfmake(html);
 
-  const cleaned = markdownText
-
-    /* ======================================
-      1️⃣ Replace Section Emojis With Text
-    ====================================== */
-
-    .replace(/🌿/g, "")
-    .replace(/🌱/g, "")
-    .replace(/📊/g, "")
-    .replace(/📈/g, "")
-    .replace(/📋/g, "")
-    .replace(/📌/g, "")
-    .replace(/⚠️?/g, "")
-    .replace(/🧠/g, "")
-
-    // Treatment & Action Icons
-    .replace(/🚑/g, replacementLabels.immediateActions)
-    .replace(/✂️?/g, replacementLabels.pruning)
-    .replace(/🧪/g, replacementLabels.recommendedTreatment)
-    .replace(/📅/g, replacementLabels.treatmentSchedule)
-    .replace(/🛡️?/g, replacementLabels.protectionMeasures)
-
-    // Prevention Icons
-    .replace(/🌦️?/g, replacementLabels.environmentalFactors)
-    .replace(/🌬️?/g, replacementLabels.ventilation)
-    .replace(/📏/g, replacementLabels.properSpacing)
-    .replace(/💦/g, replacementLabels.irrigationManagement)
-    .replace(/🌾/g, replacementLabels.fertilizationStrategy)
-    .replace(/🧼/g, replacementLabels.sanitationPractices)
-    .replace(/🧑‍🌾/g, replacementLabels.monitoringPlan)
-    .replace(/🔄/g, replacementLabels.diseaseSpread)
-
-    /* ======================================
-      2️⃣ Replace Number Emojis
-    ====================================== */
-
-    .replace(/1️⃣/g, "1.")
-    .replace(/2️⃣/g, "2.")
-    .replace(/3️⃣/g, "3.")
-    .replace(/4️⃣/g, "4.")
-    .replace(/5️⃣/g, "5.")
-    .replace(/6️⃣/g, "6.")
-    .replace(/7️⃣/g, "7.")
-    .replace(/8️⃣/g, "8.")
-    .replace(/9️⃣/g, "9.")
-    .replace(/🔟/g, "10.")
-
-    /* ======================================
-      3️⃣ Clean Invisible Unicode Garbage
-    ====================================== */
-
-    .replace(/[\uFE0F]/g, "")          // Variation selectors
-    .replace(/[\u200B-\u200D]/g, "")   // Zero width chars
-    .replace(/[\uFEFF]/g, "")          // BOM
-    .replace(/[\u20E3]/g, "")          // Keycap
-    .replace(/[\uE000-\uF8FF]/g, "")   // Private use area
-
-    /* ======================================
-      4️⃣ Remove Any Remaining Emojis Globally
-      (Full Unicode Emoji Strip)
-    ====================================== */
-    .replace(/\*\*\s+Soil/g, "**Soil")
-    .replace(/\*\*\s+Watering:/g, "**Watering")
-    .replace(/\*\*\s+Fertilization/g, "**Fertilization")
-
-    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "");
-
-
-    
-    const html = marked.parse(cleaned);
-    const converted = htmlToPdfmake(html);
-
-    // Convert image URL to base64 with CORS handling for production
-    const toBase64 = async (url) => {
-      try {
-        // Try fetching with no-cors mode first
-        const res = await fetch(url, { mode: 'cors' });
-        const blob = await res.blob();
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-      } catch (error) {
-        // Fallback: use Image element to convert to base64
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-          };
-          img.onerror = () => {
-            // Return empty string if all methods fail - PDF will generate without logo
-            resolve('');
-          };
-          img.src = url;
-        });
-      }
+    const normalizationOptions = {
+      isArabicDocument: pdfIsArabic,
+      preferredFont,
+      fallbackFont
     };
+
+    const contentNodes = pdfIsArabic
+      ? fixBulletNodes(
+          Array.isArray(convertedNodes) ? convertedNodes : [convertedNodes],
+          normalizationOptions
+        )
+      : (Array.isArray(convertedNodes) ? convertedNodes : [convertedNodes]);
 
     const selectedLogo = pdfIsArabic ? arabicNabtaLogo : nabtaLogo;
     const logoBase64 = await toBase64(selectedLogo);
+    const generatedAt = new Intl.DateTimeFormat(pdfIsArabic ? "ar-EG" : "en-US", {
+      dateStyle: "medium",
+      timeStyle: "short"
+    }).format(new Date());
 
-    // Build header columns - Arabic layout keeps logo on the right.
-    const titleStackColumn = {
-      width: "*",
-      stack: [
-        {
-          text: pdfText.pdfTitle,
-          alignment: logoBase64 ? "center" : "left",
-          fontSize: 22,
-          bold: true
-        },
-        {
-          margin: [0, 8, 0, 8],
-          canvas: [
-            {
-              type: "rect",
-              x: pdfIsArabic ? 0 : -140,
-              y: 0,
-              w: 500,
-              h: 6,
-              color: "#DC2626"
-            }
-          ]
-        },
-        {
-          text: `${pdfText.generatedOn} ` + new Date().toLocaleString(),
-          alignment: logoBase64 ? "center" : "left",
-          fontSize: 10,
-          color: "gray",
-          margin: [0, 5, 0, 5]
-        }
-      ]
-    };
-
-    const logoColumn = logoBase64
-      ? {
-          image: logoBase64,
-          width: 130,
-          ...(pdfIsArabic ? { relativePosition: { x: -140, y: 0 } } : {})
-        }
-      : null;
-    const headerColumns = pdfIsArabic
-      ? [titleStackColumn, ...(logoColumn ? [logoColumn] : [])]
-      : [...(logoColumn ? [logoColumn] : []), titleStackColumn];
-
-    const documentDefinition = {
-      pageSize: "A4",
-      pageMargins: [40, 100, 40, 60],
-      defaultStyle: {
-        ...(preferredFont ? { font: preferredFont } : {}),
-        alignment: pdfIsArabic ? "right" : "left"
-      },
-
-      header: {
-        margin: [40, 30, 40, 10],
-        stack: [
-          {
-            columns: headerColumns
-          }
-        ]
-      },
-
-      footer: function (currentPage, pageCount) {
-        return {
-          margin: [40, 0, 40, 20],
-          columns: pdfIsArabic
-            ? [
-                {
-                  text: pdfText.pageOf
-                    .replace("{{current}}", String(currentPage))
-                    .replace("{{total}}", String(pageCount)),
-                  alignment: "left",
-                  fontSize: 8,
-                  color: "gray"
-                },
-                {
-                  text: pdfText.assistantName,
-                  alignment: "right",
-                  fontSize: 8,
-                  color: "gray"
-                }
-              ]
-            : [
-                { text: pdfText.assistantName, fontSize: 8, color: "gray" },
-                {
-                  text: pdfText.pageOf
-                    .replace("{{current}}", String(currentPage))
-                    .replace("{{total}}", String(pageCount)),
-                  alignment: "right",
-                  fontSize: 8,
-                  color: "gray"
-                }
-              ]
-        };
-      },
-
-      content: [
-        {
-          stack: converted,
-          alignment: pdfIsArabic ? "right" : "left",
-          rtl: pdfIsArabic,
-          fontSize: 11,
-          lineHeight: 1.5
-        }
-      ],
-
-      styles: {
-        h1: { fontSize: 20, bold: true, margin: [0, 15, 0, 8] },
-        h2: { fontSize: 16, bold: true, margin: [0, 12, 0, 6] },
-        h3: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] }
-      }
-    };
+    const documentDefinition = buildPdfDefinition({
+      pdfText,
+      pdfIsArabic,
+      preferredFont,
+      fallbackFont,
+      logoBase64,
+      generatedAt,
+      contentNodes
+    });
 
     return new Promise((resolve, reject) => {
       try {
         pdfMake.createPdf(documentDefinition).download("Nabta_AI_Report.pdf");
         resolve();
       } catch (primaryError) {
-        // Fallback to Roboto if the selected font fails for any reason.
         try {
           if (!fallbackFont) {
             throw primaryError;
           }
 
-          const fallbackDefinition = {
-            ...documentDefinition,
-            defaultStyle: {
-              ...documentDefinition.defaultStyle,
-              font: fallbackFont
-            }
+          const fallbackOptions = {
+            ...normalizationOptions,
+            preferredFont: fallbackFont,
+            fallbackFont: preferredFont
           };
+
+          const fallbackContentNodes = pdfIsArabic
+            ? fixBulletNodes(
+                Array.isArray(convertedNodes) ? convertedNodes : [convertedNodes],
+                fallbackOptions
+              )
+            : (Array.isArray(convertedNodes) ? convertedNodes : [convertedNodes]);
+
+          const fallbackDefinition = buildPdfDefinition({
+            pdfText,
+            pdfIsArabic,
+            preferredFont: fallbackFont,
+            fallbackFont: preferredFont,
+            logoBase64,
+            generatedAt,
+            contentNodes: fallbackContentNodes
+          });
+
           pdfMake.createPdf(fallbackDefinition).download("Nabta_AI_Report.pdf");
           resolve();
         } catch (fallbackError) {
@@ -496,6 +1339,70 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading, typedText]);
+
+  useEffect(() => {
+    setActiveSearchMatchIndex(0);
+  }, [normalizedSearchQuery]);
+
+  useEffect(() => {
+    const matchElements = messagesContainerRef.current
+      ? Array.from(messagesContainerRef.current.querySelectorAll(".chat-search-highlight"))
+      : [];
+
+    if (!normalizedSearchQuery || matchElements.length === 0) {
+      if (typeof onSearchMatchStatsChange === "function") {
+        onSearchMatchStatsChange({ current: 0, total: 0 });
+      }
+      return;
+    }
+
+    const boundedIndex = Math.min(activeSearchMatchIndex, matchElements.length - 1);
+    if (boundedIndex !== activeSearchMatchIndex) {
+      setActiveSearchMatchIndex(boundedIndex);
+      return;
+    }
+
+    if (typeof onSearchMatchStatsChange === "function") {
+      onSearchMatchStatsChange({ current: boundedIndex + 1, total: matchElements.length });
+    }
+  }, [
+    filteredMessages,
+    normalizedSearchQuery,
+    activeSearchMatchIndex,
+    typedText,
+    typingMessageId,
+    onSearchMatchStatsChange
+  ]);
+
+  useEffect(() => {
+    if (!normalizedSearchQuery || !searchJumpRequest?.token) {
+      return;
+    }
+
+    const totalMatches = messagesContainerRef.current
+      ? messagesContainerRef.current.querySelectorAll(".chat-search-highlight").length
+      : 0;
+
+    if (totalMatches <= 1) {
+      return;
+    }
+
+    setActiveSearchMatchIndex((prevIndex) => {
+      const nextIndex = searchJumpRequest.direction === "prev"
+        ? (prevIndex - 1 + totalMatches) % totalMatches
+        : (prevIndex + 1) % totalMatches;
+
+      window.requestAnimationFrame(() => {
+        const targetElement = messagesContainerRef.current?.querySelector(
+          `[data-search-index="${nextIndex}"]`
+        );
+
+        targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+
+      return nextIndex;
+    });
+  }, [searchJumpRequest, normalizedSearchQuery]);
 
   // Scroll to bottom on initial mount
   useEffect(() => {
@@ -805,12 +1712,14 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
     }
   };
 
+  const searchHighlightCounter = { value: 0 };
+
   return (
     <div className="chat-container" dir={language === "ar" ? "rtl" : "ltr"}>
 
-      <div className="chat-messages">
+      <div className="chat-messages" ref={messagesContainerRef}>
 
-        {messages.map(msg => {
+        {filteredMessages.map(msg => {
           const arabic = msg.isArabic !== undefined ? msg.isArabic : isArabic(msg.text);
           const alignment = msg.role === "user"
             ? "flex-end"
@@ -863,7 +1772,10 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
                 className={`chat-bubble ${msg.role === "user" ? "user" : "bot"}`}
                 dir={arabic ? "rtl" : "ltr"}
                 dangerouslySetInnerHTML={{
-                  __html: marked.parse(displayText || " ")
+                  __html: highlightHtmlMatches(marked.parse(displayText || " "), normalizedSearchQuery, {
+                    activeIndex: activeSearchMatchIndex,
+                    counterRef: searchHighlightCounter
+                  })
                 }}
               />
               {typingMessageId === msg.id && (
@@ -872,6 +1784,12 @@ export default function AIAssistant({ pendingReport, onReportProcessed, newChatT
             </div>
           );
         })}
+
+        {!loading && normalizedSearchQuery && filteredMessages.length === 0 && (
+          <div className="chat-search-empty" dir={language === "ar" ? "rtl" : "ltr"}>
+            {t.noResults}
+          </div>
+        )}
 
         {loading && (() => {
           const lastUserMessage = messages.filter(m => m.role === "user").pop();

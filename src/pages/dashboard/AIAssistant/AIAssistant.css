@@ -379,6 +379,28 @@ html, body {
   vertical-align: middle;
 }
 
+.chat-search-empty {
+  align-self: center;
+  font-size: 13px;
+  color: #6B7280;
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 999px;
+  padding: 8px 14px;
+}
+
+.chat-search-highlight {
+  background: #FEF08A;
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+.chat-search-highlight--active {
+  background: #F97316;
+  color: #ffffff;
+}
+
 @media (max-width: 1023px) {
   .chat-input-area {
     inset-inline-start: 0;
