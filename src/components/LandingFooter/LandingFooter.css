@@ -15,3 +15,7 @@
   font-size: 14px;
   opacity: .8;
 }
+
+[dir="rtl"] .landing-footer {
+  flex-direction: row-reverse;
+}

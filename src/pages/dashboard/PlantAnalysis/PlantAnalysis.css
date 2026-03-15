@@ -466,7 +466,7 @@
   /* margin-right:30px; */
   display:flex;
   align-items:center;
-  gap:2px;
+    gap:6px;
   font-size:14px;
   font-weight:600;
 }
@@ -478,6 +478,21 @@
   border-radius:20px;
   padding:1px 4px;
   cursor:pointer;
+}
+
+.arrow-controls.rtl {
+    flex-direction: row;
+}
+
+.arrow-controls.ltr {
+    flex-direction: row;
+}
+
+[dir="rtl"] .classification-info,
+[dir="rtl"] .info-label,
+[dir="rtl"] .info-value,
+[dir="rtl"] .confidence-text {
+    text-align: right;
 }
 /* ================= Completed Badge ================= */
 

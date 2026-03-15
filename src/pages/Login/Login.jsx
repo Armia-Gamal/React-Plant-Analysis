@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "../../index.css";
 import "./Login.css";
 import image from "../../assets/images/Image.png";
+import arImage from "../../assets/images/Ar-Image.png";
+import { useLanguage } from "../../context/LanguageContext";
 
 import {
   signInWithEmailAndPassword,
@@ -14,9 +16,60 @@ import {
 
 import { auth, googleProvider } from "../../firebase";
 
+const text = {
+  en: {
+    title: "Login | Nabta-System",
+    emptyFields: "Please enter email and password",
+    invalidLogin: "Invalid email or password.",
+    unregisteredGoogle: "This account is not registered. Please sign up first.",
+    loginFailed: "Login failed.",
+    notAccess: "Not Access",
+    closeNotAccess: "Close Not Access message",
+    welcomeBack: "Welcome Back",
+    subtitle: "Enter your email and password to sign in",
+    email: "Email",
+    emailPlaceholder: "Your email address",
+    password: "Password",
+    passwordPlaceholder: "Your password",
+    forgotPassword: "Forgot password?",
+    rememberMe: "Remember me",
+    signingIn: "Signing in...",
+    signIn: "Sign in",
+    noAccount: "Don’t have an account?",
+    signUp: "Sign up",
+    orContinueWith: "OR CONTINUE WITH",
+    signInGoogle: "Sign in with Google"
+  },
+  ar: {
+    title: "تسجيل الدخول | Nabta-System",
+    emptyFields: "يرجى إدخال البريد الإلكتروني وكلمة المرور",
+    invalidLogin: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    unregisteredGoogle: "هذا الحساب غير مسجل. يرجى إنشاء حساب أولاً.",
+    loginFailed: "فشل تسجيل الدخول.",
+    notAccess: "غير مسموح بالدخول",
+    closeNotAccess: "إغلاق رسالة عدم السماح",
+    welcomeBack: "مرحبًا بعودتك",
+    subtitle: "أدخل البريد الإلكتروني وكلمة المرور لتسجيل الدخول",
+    email: "البريد الإلكتروني",
+    emailPlaceholder: "أدخل بريدك الإلكتروني",
+    password: "كلمة المرور",
+    passwordPlaceholder: "أدخل كلمة المرور",
+    forgotPassword: "نسيت كلمة المرور؟",
+    rememberMe: "تذكرني",
+    signingIn: "جاري تسجيل الدخول...",
+    signIn: "تسجيل الدخول",
+    noAccount: "ليس لديك حساب؟",
+    signUp: "إنشاء حساب",
+    orContinueWith: "أو المتابعة باستخدام",
+    signInGoogle: "تسجيل الدخول باستخدام Google"
+  }
+};
+
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { language } = useLanguage();
+  const t = text[language] || text.en;
   const notAccess = location && location.state && location.state.notAccess;
   const [showNotAccess, setShowNotAccess] = useState(false);
 
@@ -40,8 +93,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    document.title = "Login | Nabta-System";
-  }, []);
+    document.title = t.title;
+  }, [t.title]);
 
   // تحميل Remember Me
   useEffect(() => {
@@ -61,7 +114,7 @@ export default function Login() {
   // =========================
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) {
-      setLoginError("Please enter email and password");
+      setLoginError(t.emptyFields);
       return;
     }
 
@@ -96,7 +149,7 @@ export default function Login() {
       navigate("/dashboard", { replace: true });
 
     } catch (error) {
-      setLoginError("Invalid email or password.");
+      setLoginError(t.invalidLogin);
     } finally {
       setLoginLoading(false);
     }
@@ -124,19 +177,19 @@ export default function Login() {
 
         await auth.signOut();
 
-        setLoginError("This account is not registered. Please sign up first.");
+        setLoginError(t.unregisteredGoogle);
         return;
       }
 
       navigate("/dashboard", { replace: true });
 
     } catch (error) {
-      setLoginError("Login failed.");
+      setLoginError(t.loginFailed);
     }
   };
 
   return (
-    <main className="login-layout">
+    <main className="login-layout" dir={language === "ar" ? "rtl" : "ltr"}>
       {showNotAccess && (
         <div style={{
           position: "fixed",
@@ -167,7 +220,7 @@ export default function Login() {
             outline: "4px solid #fff",
             position: "relative"
           }}>
-            <span style={{fontSize: "1.7rem", fontWeight: "bold"}}>Not Access</span>
+            <span style={{fontSize: "1.7rem", fontWeight: "bold"}}>{t.notAccess}</span>
             <button
               style={{
                 background: "none",
@@ -175,13 +228,13 @@ export default function Login() {
                 color: "#dc2626",
                 fontSize: "2rem",
                 cursor: "pointer",
-                marginLeft: "24px",
+                marginInlineStart: "24px",
                 position: "absolute",
                 top: "12px",
-                right: "18px"
+                insetInlineEnd: "18px"
               }}
               onClick={() => setShowNotAccess(false)}
-              aria-label="Close Not Access message"
+              aria-label={t.closeNotAccess}
               autoFocus
             >
               ×
@@ -191,23 +244,23 @@ export default function Login() {
       )}
       <section className="login-left">
         <div className="login-card-box">
-          <h2>Welcome Back</h2>
-          <p>Enter your email and password to sign in</p>
+          <h2>{t.welcomeBack}</h2>
+          <p>{t.subtitle}</p>
 
-          <label>Email</label>
+          <label>{t.email}</label>
           <input
             type="email"
-            placeholder="Your email address"
+            placeholder={t.emailPlaceholder}
             value={loginEmail}
             onChange={(e) => setLoginEmail(e.target.value)}
           />
 
-          <label>Password</label>
+          <label>{t.password}</label>
 
           <div className="login-password-field">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Your password"
+              placeholder={t.passwordPlaceholder}
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
             />
@@ -220,12 +273,12 @@ export default function Login() {
 
 
 
-          <div style={{ textAlign: "right", marginBottom: "10px" }}>
+          <div style={{ textAlign: "end", marginBottom: "10px" }}>
             <span
               onClick={() => navigate("/reset-password")}
               style={{ cursor: "pointer", fontSize: "13px", color: "#fc0038" }}
             >
-              Forgot password?
+              {t.forgotPassword}
             </span>
           </div>
 
@@ -238,7 +291,7 @@ export default function Login() {
               />
               <span className="login-slider"></span>
             </label>
-            <span>Remember me</span>
+            <span>{t.rememberMe}</span>
           </div>
 
           {loginError && (
@@ -252,16 +305,16 @@ export default function Login() {
             onClick={handleLogin}
             disabled={loginLoading}
           >
-            {loginLoading ? "Signing in..." : "Sign in"}
+            {loginLoading ? t.signingIn : t.signIn}
           </button>
 
           <p className="login-signup-link">
-            Don’t have an account?{" "}
-            <span onClick={() => navigate("/signup")}>Sign up</span>
+            {t.noAccount}{" "}
+            <span onClick={() => navigate("/signup")}>{t.signUp}</span>
           </p>
 
           <div className="login-divider">
-            <span>OR CONTINUE WITH</span>
+            <span>{t.orContinueWith}</span>
           </div>
 
           <button
@@ -281,13 +334,13 @@ export default function Login() {
               <path fill="#FBBC05" d="M10.67 28.68a14.6 14.6 0 010-9.36l-8.04-6.24A23.97 23.97 0 000 24c0 3.86.92 7.52 2.63 10.92l8.04-6.24z"/>
               <path fill="#34A853" d="M24 48c6.34 0 11.66-2.1 15.55-5.73l-7.27-5.65c-2.02 1.35-4.62 2.15-8.28 2.15-6.28 0-11.6-3.52-13.33-8.68l-8.04 6.24C6.54 42.52 14.62 48 24 48z"/>
             </svg>
-            Sign in with Google
+            {t.signInGoogle}
           </button>
         </div>
       </section>
 
       <section className="login-right">
-        <img src={image} alt="login" />
+        <img src={language === "ar" ? arImage : image} alt="login" />
       </section>
     </main>
   );

@@ -17,3 +17,7 @@
   display: flex;
   gap: 24px;
 }
+
+[dir="rtl"] .footer {
+  flex-direction: row-reverse;
+}

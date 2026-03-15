@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 import logo from "../../assets/images/Logo.svg";
+import logoArabic from "../../assets/images/lllls.png";
 import plantIcon from "../../assets/images/plant-icon.png";
 import plantIconActive from "../../assets/images/plant-icon-active.png";
 import aiIconInactive from "../../assets/images/hubot-svgrepo-com.svg";
@@ -11,9 +12,32 @@ import profileIconInactive from "../../assets/images/profile-svgrepo-com.svg";
 import profileIcon from "../../assets/images/profile-svgrepo-com (1).svg";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase";
+import { useLanguage } from "../../context/LanguageContext";
+
+const text = {
+  en: {
+    plant: "Plant Analysis",
+    ai: "AI Assistant",
+    history: "History",
+    accountPages: "ACCOUNT PAGES",
+    profile: "Profile",
+    signOut: "Sign Out"
+  },
+  ar: {
+    plant: "تحليل النبات",
+    ai: "المساعد الذكي",
+    history: "السجل",
+    accountPages: "صفحات الحساب",
+    profile: "الملف الشخصي",
+    signOut: "تسجيل الخروج"
+  }
+};
 
 export default function Sidebar({ activePage, setActivePage }) {
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const t = text[language] || text.en;
+  const activeLogo = language === "ar" ? logoArabic : logo;
 
   const handleLogout = async () => {
     try {
@@ -25,11 +49,15 @@ export default function Sidebar({ activePage, setActivePage }) {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" dir={language === "ar" ? "rtl" : "ltr"}>
 
       <div>
         <div className="sidebar-header">
-          <img src={logo} alt="Nabta Logo" />
+          <img
+            src={activeLogo}
+            alt="Nabta Logo"
+            className={language === "ar" ? "sidebar-logo-ar" : ""}
+          />
         </div>
 
         <hr />
@@ -42,7 +70,7 @@ export default function Sidebar({ activePage, setActivePage }) {
             <div className="menu-icon">
               <img src={activePage === "plant" ? plantIcon : plantIconActive} alt="Plant" />
             </div>
-            <span>Plant Analysis</span>
+            <span>{t.plant}</span>
           </li>
 
           <li
@@ -52,7 +80,7 @@ export default function Sidebar({ activePage, setActivePage }) {
             <div className="menu-icon">
               <img src={activePage === "ai" ? aiIcon : aiIconInactive} alt="AI" />
             </div>
-            <span>AI Assistant</span>
+            <span>{t.ai}</span>
           </li>
 
           <li
@@ -62,13 +90,13 @@ export default function Sidebar({ activePage, setActivePage }) {
             <div className="menu-icon">
               <img src={activePage === "history" ? historyIcon : historyIconInactive} alt="History" />
             </div>
-            <span>History</span>
+            <span>{t.history}</span>
           </li>
         </ul>
 
         <hr className="sidebar-hr-bottom" />
 
-        <p className="section-label">ACCOUNT PAGES</p>
+        <p className="section-label">{t.accountPages}</p>
 
         <ul className="menu">
           <li
@@ -78,7 +106,7 @@ export default function Sidebar({ activePage, setActivePage }) {
             <div className="menu-icon">
               <img src={activePage === "profile" ? profileIcon : profileIconInactive} alt="Profile" />
             </div>
-            <span>Profile</span>
+            <span>{t.profile}</span>
           </li>
         </ul>
       </div>
@@ -98,7 +126,7 @@ export default function Sidebar({ activePage, setActivePage }) {
           <polyline points="16 17 21 12 16 7" />
           <line x1="21" y1="12" x2="9" y2="12" />
         </svg>
-        <span>Sign Out</span>
+        <span>{t.signOut}</span>
       </div>
 
     </aside>

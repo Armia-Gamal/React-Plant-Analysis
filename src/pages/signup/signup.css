@@ -10,6 +10,10 @@
   align-items: center;
 }
 
+[dir="rtl"] .signup-hero {
+  background-image: url("../../assets/images/ar-sign-up.png");
+}
+
 .signup-welcome {
   text-align: center;
   color: #fff;
@@ -114,12 +118,12 @@
   margin: 8px 0 14px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
-  padding-right: 40px;
+  padding-inline-end: 40px;
 }
 
 .signup-password-field i {
   position: absolute;
-  right: 12px;
+  inset-inline-end: 12px;
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
@@ -130,6 +134,16 @@
 
 .signup-password-field i:hover {
   color: #42d3c4;
+}
+
+[dir="rtl"] .signup-password-field input {
+  padding-right: 12px;
+  padding-left: 40px;
+}
+
+[dir="rtl"] .signup-password-field i {
+  right: auto;
+  left: 12px;
 }
 
 

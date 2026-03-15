@@ -4,9 +4,9 @@
   background-color: #F8F9FA;
   padding: 30px 20px;
   position: fixed;
-  left: 0;
+  inset-inline-start: 0;
   top: 0;
-  border-right: 1px solid #E5E7EB;
+  border-inline-end: 1px solid #E5E7EB;
   display: flex;
   flex-direction: column;
   justify-content: space-between; 
@@ -46,6 +46,11 @@
   width: 130px;
 }
 
+.sidebar-header img.sidebar-logo-ar {
+  width: 100px;
+  margin-top: -15px;
+}
+
 .sidebar hr {
   border: none;
   height: 1px;
@@ -67,6 +72,12 @@
   margin-bottom: 15px;
   cursor: pointer;
   transition: 0.3s;
+}
+
+[dir="rtl"] .menu li,
+[dir="rtl"] .sidebar-footer,
+[dir="rtl"] .section-label {
+  text-align: right;
 }
 
 .menu li:hover {

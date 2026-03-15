@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./signup.css";
 import { auth, googleProvider, db, functions } from "../../firebase";
+import { useLanguage } from "../../context/LanguageContext";
 import {
   createUserWithEmailAndPassword,
   updateProfile,
@@ -10,8 +11,49 @@ import {
 import { doc, setDoc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
+const text = {
+  en: {
+    title: "Sign Up | Nabta-System",
+    welcome: "Welcome!",
+    welcomeText: "Register now to detect plant diseases quickly and accurately using our AI-powered system for healthier crops.",
+    registerWith: "Register with",
+    signUpGoogle: "Sign up with Google",
+    or: "Or",
+    name: "Name",
+    namePlaceholder: "Your full name",
+    email: "Email",
+    emailPlaceholder: "Your email address",
+    password: "Password",
+    passwordPlaceholder: "Your password",
+    creating: "Creating account...",
+    signUp: "Sign Up",
+    alreadyHaveAccount: "Already have an account?",
+    signIn: "Sign In"
+  },
+  ar: {
+    title: "إنشاء حساب | Nabta-System",
+    welcome: "مرحبًا!",
+    welcomeText: "سجّل الآن لاكتشاف أمراض النباتات بسرعة ودقة باستخدام نظامنا المدعوم بالذكاء الاصطناعي لمحاصيل أكثر صحة.",
+    registerWith: "سجّل باستخدام",
+    signUpGoogle: "إنشاء حساب باستخدام Google",
+    or: "أو",
+    name: "الاسم",
+    namePlaceholder: "الاسم الكامل",
+    email: "البريد الإلكتروني",
+    emailPlaceholder: "أدخل بريدك الإلكتروني",
+    password: "كلمة المرور",
+    passwordPlaceholder: "أدخل كلمة المرور",
+    creating: "جاري إنشاء الحساب...",
+    signUp: "إنشاء حساب",
+    alreadyHaveAccount: "لديك حساب بالفعل؟",
+    signIn: "تسجيل الدخول"
+  }
+};
+
 export default function Signup() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const t = text[language] || text.en;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,8 +63,8 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    document.title = "Sign Up | Nabta-System";
-  }, []);
+    document.title = t.title;
+  }, [t.title]);
 
   const sendEmail = httpsCallable(functions, "sendWelcomeEmail");
 
@@ -97,19 +139,19 @@ export default function Signup() {
   };
 
   return (
-    <>
+    <div dir={language === "ar" ? "rtl" : "ltr"}>
       <section className="signup-hero">
         <div className="signup-welcome">
-          <h1>Welcome!</h1>
+          <h1>{t.welcome}</h1>
           <p>
-          Register now to detect plant diseases quickly and accurately using our AI-powered system for healthier crops.
+            {t.welcomeText}
           </p>
         </div>
       </section>
 
       <div className="signup-layout">
         <div className="signup-card">
-          <h2>Register with</h2>
+          <h2>{t.registerWith}</h2>
 
           <button
             type="button"
@@ -128,35 +170,35 @@ export default function Signup() {
               <path fill="#FBBC05" d="M10.67 28.68a14.6 14.6 0 010-9.36l-8.04-6.24A23.97 23.97 0 000 24c0 3.86.92 7.52 2.63 10.92l8.04-6.24z"/>
               <path fill="#34A853" d="M24 48c6.34 0 11.66-2.1 15.55-5.73l-7.27-5.65c-2.02 1.35-4.62 2.15-8.28 2.15-6.28 0-11.6-3.52-13.33-8.68l-8.04 6.24C6.54 42.52 14.62 48 24 48z"/>
             </svg>
-            Sign up with Google
+            {t.signUpGoogle}
           </button>
 
           <div className="signup-divider">
-            <span>Or</span>
+            <span>{t.or}</span>
           </div>
 
-          <label>Name</label>
+          <label>{t.name}</label>
           <input
             type="text"
-            placeholder="Your full name"
+            placeholder={t.namePlaceholder}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
 
-          <label>Email</label>
+          <label>{t.email}</label>
           <input
             type="email"
-            placeholder="Your email address"
+            placeholder={t.emailPlaceholder}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          <label>Password</label>
+          <label>{t.password}</label>
 
           <div className="signup-password-field">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Your password"
+              placeholder={t.passwordPlaceholder}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -179,15 +221,15 @@ export default function Signup() {
             onClick={handleSignup}
             disabled={loading}
           >
-            {loading ? "Creating account..." : "Sign Up"}
+            {loading ? t.creating : t.signUp}
           </button>
 
           <div className="signup-footer">
-            Already have an account?{" "}
-            <span onClick={() => navigate("/login")}>Sign In</span>
+            {t.alreadyHaveAccount}{" "}
+            <span onClick={() => navigate("/login")}>{t.signIn}</span>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

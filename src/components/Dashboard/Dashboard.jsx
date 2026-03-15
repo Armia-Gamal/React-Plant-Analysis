@@ -1,12 +1,52 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import PlantAnalysis from "../../pages/dashboard/PlantAnalysis/PlantAnalysis";
 import AIAssistant from "../../pages/dashboard/AIAssistant/AIAssistant";
 import History from "../../pages/dashboard/History/History";
 import Profile from "../../pages/dashboard/Profile/Profile";
+import { useLanguage } from "../../context/LanguageContext";
+import languageIcon from "../../assets/images/language-svgrepo-com.svg";
 import "./Dashboard.css";
 
+const text = {
+  en: {
+    dashboard: "Dashboard",
+    plant: "Plant Analysis",
+    ai: "AI Assistant",
+    history: "History",
+    profile: "Profile",
+    upload: "Upload",
+    detect: "Detect",
+    segment: "Segment",
+    classify: "Classify",
+    aiTitle: "Nabta AI Assistant 🌿",
+    newChat: "Start new chat",
+    searchPlaceholder: "Type here...",
+    english: "English",
+    arabic: "Arabic"
+  },
+  ar: {
+    dashboard: "لوحة التحكم",
+    plant: "تحليل النبات",
+    ai: "المساعد الذكي",
+    history: "السجل",
+    profile: "الملف الشخصي",
+    upload: "رفع",
+    detect: "اكتشاف",
+    segment: "تقسيم",
+    classify: "تصنيف",
+    aiTitle: "مساعد نبتة الذكي 🌿",
+    newChat: "محادثة جديدة",
+    searchPlaceholder: "اكتب هنا...",
+    english: "الإنجليزية",
+    arabic: "العربية"
+  }
+};
+
 export default function Dashboard() {
+  const { language, changeLanguage } = useLanguage();
+  const t = text[language] || text.en;
+  const languageMenuRef = useRef(null);
 
   const [activePage, setActivePage] = useState("plant");
 
@@ -17,11 +57,22 @@ export default function Dashboard() {
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [pendingReport, setPendingReport] = useState(null);
-  const [showChatMenu, setShowChatMenu] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [newChatTrigger, setNewChatTrigger] = useState(0);
 
   useEffect(() => {
-    document.title = "Dashboard | Nabta-System";
+    document.title = `${t.dashboard} | Nabta-System`;
+  }, [t.dashboard]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (languageMenuRef.current && !languageMenuRef.current.contains(event.target)) {
+        setShowLanguageMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSendReport = (prompt, isHidden = false) => {
@@ -31,7 +82,6 @@ export default function Dashboard() {
 
   const handleNewChat = () => {
     setNewChatTrigger(prev => prev + 1);
-    setShowChatMenu(false);
   };
 
   // render all pages but hide the inactive ones; this preserves state such as images
@@ -66,7 +116,7 @@ export default function Dashboard() {
   const isActive = (index) => step === index;
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-layout" dir={language === "ar" ? "rtl" : "ltr"}>
 
       <Sidebar activePage={activePage} setActivePage={setActivePage} />
 
@@ -76,12 +126,12 @@ export default function Dashboard() {
 
           <div className="navbar-left">
             <span className="breadcrumb">
-              Dashboard /
+              {t.dashboard} /
               <span className="breadcrumb-active">
-                {activePage === "plant" && " Plant Analysis"}
-                {activePage === "ai" && " AI Assistant"}
-                {activePage === "history" && " History"}
-                {activePage === "profile" && " Profile"}
+                {activePage === "plant" && ` ${t.plant}`}
+                {activePage === "ai" && ` ${t.ai}`}
+                {activePage === "history" && ` ${t.history}`}
+                {activePage === "profile" && ` ${t.profile}`}
               </span>
             </span>
           </div>
@@ -90,13 +140,13 @@ export default function Dashboard() {
             <div className="navbar-center">
 
               <div className="progress-steps">
-                <span>Upload</span>
+                <span>{t.upload}</span>
                 <span>→</span>
-                <span>Detect</span>
+                <span>{t.detect}</span>
                 <span>→</span>
-                <span>Segment</span>
+                <span>{t.segment}</span>
                 <span>→</span>
-                <span>Classify</span>
+                <span>{t.classify}</span>
               </div>
 
               <div className="progress-dots">
@@ -142,9 +192,9 @@ export default function Dashboard() {
 
           {activePage === "ai" && (
             <div className="navbar-center chat-header-navbar">
-              <h3>Nabta AI Assistant 🌿</h3>
+              <h3>{t.aiTitle}</h3>
 
-              <div className="nav-icon" onClick={handleNewChat} title="Start new chat">
+              <div className="nav-icon" onClick={handleNewChat} title={t.newChat}>
                 +
               </div>
 
@@ -153,9 +203,65 @@ export default function Dashboard() {
 
         <div className="navbar-right">
           <div className="search-box">
-            <input type="text" placeholder="Type here..." />
+            <input type="text" placeholder={t.searchPlaceholder} />
           </div>
-          <div className="nav-icon">⚙</div>
+          <div className="language-switcher" ref={languageMenuRef}>
+            <button
+              type="button"
+              className="nav-icon nav-icon-button"
+              onClick={() => setShowLanguageMenu((prev) => !prev)}
+              title={language === "ar" ? t.arabic : t.english}
+            >
+              <img src={languageIcon} alt="Language" className="language-icon" />
+            </button>
+
+            {showLanguageMenu && (
+              <div className="language-dropdown">
+                <button
+                  type="button"
+                  className={`language-option ${language === "en" ? "active" : ""}`}
+                  onClick={() => {
+                    changeLanguage("en");
+                    setShowLanguageMenu(false);
+                  }}
+                >
+                  <span className="language-option-content">
+                    <img
+                      src="https://flagcdn.com/16x12/gb.png"
+                      srcSet="https://flagcdn.com/32x24/gb.png 2x, https://flagcdn.com/48x36/gb.png 3x"
+                      width="16"
+                      height="12"
+                      alt="United Kingdom"
+                      className="language-flag"
+                    />
+                    <span className="language-flag-emoji" aria-hidden="true">🇬🇧</span>
+                    <span>English</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={`language-option ${language === "ar" ? "active" : ""}`}
+                  onClick={() => {
+                    changeLanguage("ar");
+                    setShowLanguageMenu(false);
+                  }}
+                >
+                  <span className="language-option-content">
+                    <img
+                      src="https://flagcdn.com/16x12/eg.png"
+                      srcSet="https://flagcdn.com/32x24/eg.png 2x, https://flagcdn.com/48x36/eg.png 3x"
+                      width="16"
+                      height="12"
+                      alt="Egypt"
+                      className="language-flag"
+                    />
+                    <span className="language-flag-emoji" aria-hidden="true">🇪🇬</span>
+                    <span>العربية</span>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
           <div className="nav-icon">🔔</div>
           <div className="nav-icon">☀</div>
         </div>

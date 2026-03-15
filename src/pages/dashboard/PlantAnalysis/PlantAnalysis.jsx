@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useLanguage } from "../../../context/LanguageContext";
 import bgImage from "../../../assets/images/OIP.jpg";
 import uploadImg from "../../../assets/images/hoolding-leaf-svgrepo-com.svg";
 import detectImg from "../../../assets/images/Gemini_Generate.png";
@@ -6,7 +7,264 @@ import classImg from "../../../assets/images/Crop.jpg";
 import segmentImg from "../../../assets/images/opacity-planet.jpg";
 import "./PlantAnalysis.css";
 
+const text = {
+  en: {
+    dragDrop: "Drag and drop an image here",
+    formats: "Supported formats: JPG, PNG. Max file size 5MB.",
+    uploadImage: "Upload Image",
+    done: "Done",
+    objectDetection: "Object Detection",
+    detectionSubtitle: "Object detection result with cropped plant regions",
+    detectedLeaves: "Detected",
+    leaves: "leaf(s)",
+    classify: "Classify + Grad-CAM",
+    classifySubtitle: "AI-based plant disease analysis",
+    plantName: "Plant Name",
+    diseaseName: "Disease Name",
+    notDetectedYet: "Not Detected Yet",
+    notClassifiedYet: "Not Classified Yet",
+    confidence: "confidence",
+    highConfidence: "High Confidence",
+    awaitingAnalysis: "Awaiting Analysis",
+    disease: "Disease",
+    segmentation: "Segmentation",
+    segmentationSubtitle: "Segmentation mask visualization",
+    working: "Working",
+    viewReport: "View Analysis Report",
+    reportTitle: "Disease Analysis Report",
+    health: "Health",
+    detectedDiseases: "Detected Diseases",
+    diseased: "diseased",
+    healthy: "Healthy",
+    plant: "Plant",
+    infection: "Infection",
+    severity: "Severity",
+    diseaseNumber: "Disease",
+    getSmartReport: "Get Smart Report",
+    getFullSmartReport: "Get Full Smart Report (for all diseases)",
+    noDiseasedLeaves: "No diseased leaves detected."
+  },
+  ar: {
+    dragDrop: "اسحب الصورة وأفلتها هنا",
+    formats: "الصيغ المدعومة: JPG وPNG. الحد الأقصى 5MB.",
+    uploadImage: "رفع صورة",
+    done: "تم",
+    objectDetection: "اكتشاف العناصر",
+    detectionSubtitle: "نتيجة اكتشاف العناصر مع قص مناطق النبات",
+    detectedLeaves: "تم اكتشاف",
+    leaves: "ورقة",
+    classify: "تصنيف + Grad-CAM",
+    classifySubtitle: "تحليل أمراض النبات بالذكاء الاصطناعي",
+    plantName: "اسم النبات",
+    diseaseName: "اسم المرض",
+    notDetectedYet: "لم يتم الاكتشاف بعد",
+    notClassifiedYet: "لم يتم التصنيف بعد",
+    confidence: "الثقة",
+    highConfidence: "ثقة عالية",
+    awaitingAnalysis: "بانتظار التحليل",
+    disease: "المرض",
+    segmentation: "التقسيم",
+    segmentationSubtitle: "عرض قناع التقسيم",
+    working: "جاري العمل",
+    viewReport: "عرض تقرير التحليل",
+    reportTitle: "تقرير تحليل الأمراض",
+    health: "الصحة",
+    detectedDiseases: "الأمراض المكتشفة",
+    diseased: "مصابة",
+    healthy: "سليمة",
+    plant: "النبات",
+    infection: "نسبة الإصابة",
+    severity: "الحدة",
+    diseaseNumber: "المرض",
+    getSmartReport: "احصل على تقرير ذكي",
+    getFullSmartReport: "احصل على تقرير ذكي كامل (لكل الأمراض)",
+    noDiseasedLeaves: "لم يتم اكتشاف أوراق مصابة."
+  }
+};
+
+const statusText = {
+  en: {
+    Waiting: "Waiting",
+    Uploading: "Uploading",
+    Processing: "Processing",
+    Completed: "Completed"
+  },
+  ar: {
+    Waiting: "انتظار",
+    Uploading: "جاري الرفع",
+    Processing: "جاري المعالجة",
+    Completed: "مكتمل"
+  }
+};
+
+const severityText = {
+  en: {
+    Low: "Low",
+    Moderate: "Moderate",
+    Severe: "Severe",
+    Healthy: "Healthy",
+    "Not Determined": "Not Determined",
+    "Not Severity Yet": "Not Severity Yet"
+  },
+  ar: {
+    Low: "منخفض",
+    Moderate: "متوسط",
+    Severe: "شديد",
+    Healthy: "سليمة",
+    "Not Determined": "غير محدد",
+    "Not Severity Yet": "لم يتم تحديد الشدة بعد"
+  }
+};
+
+const CLASS_MAPPING_AR_BY_EN = {
+  "Apple - Apple Scab": "تفاح - جرب التفاح",
+  "Apple - Black Rot": "تفاح - العفن الأسود",
+  "Apple - Cedar Apple Rust": "تفاح - صدأ التفاح الأرزّي",
+  "Apple - Alternaria Leaf Spot": "تفاح - تبقع أوراق ألترناريا",
+  "Apple - Brown Spot": "تفاح - البقعة البنية",
+  "Apple - Gray Spot": "تفاح - البقعة الرمادية",
+  "Apple - Healthy": "تفاح - سليم",
+  "Bitter Gourd - Downy Mildew": "القرع المر - البياض الزغبي",
+  "Bitter Gourd - Fusarium Wilt": "القرع المر - ذبول الفيوزاريوم",
+  "Bitter Gourd - Healthy": "القرع المر - سليم",
+  "Bitter Gourd - Mosaic Virus": "القرع المر - فيروس الموزايك",
+  "Blueberry - Healthy": "التوت الأزرق - سليم",
+  "Bottle Gourd - Anthracnose": "القرع القاروري - الأنثراكنوز",
+  "Bottle Gourd - Downy Mildew": "القرع القاروري - البياض الزغبي",
+  "Bottle Gourd - Healthy": "القرع القاروري - سليم",
+  "Cassava - Brown Streak Disease": "الكسافا - مرض الخط البني",
+  "Cassava - Green Mottle": "الكسافا - التبقع الأخضر",
+  "Cassava - Healthy": "الكسافا - سليم",
+  "Cassava - Mosaic Disease": "الكسافا - مرض الموزايك",
+  "Cauliflower - Black Rot": "القرنبيط - العفن الأسود",
+  "Cauliflower - Downy Mildew": "القرنبيط - البياض الزغبي",
+  "Cauliflower - Healthy": "القرنبيط - سليم",
+  "Cherry (Including Sour) - Powdery Mildew": "الكرز - البياض الدقيقي",
+  "Cherry (Including Sour) - Healthy": "الكرز - سليم",
+  "Coffee - Healthy": "القهوة - سليم",
+  "Coffee - Rust": "القهوة - صدأ القهوة",
+  "Corn (Maize) - Cercospora Leaf Spot (Gray Leaf Spot)": "الذرة - تبقع أوراق سيركوسبورا (البقعة الرمادية)",
+  "Corn (Maize) - Common Rust": "الذرة - الصدأ الشائع",
+  "Corn (Maize) - Northern Leaf Blight": "الذرة - لفحة الأوراق الشمالية",
+  "Corn (Maize) - Healthy": "الذرة - سليم",
+  "Cotton - Diseased Leaf": "القطن - ورقة مصابة",
+  "Cotton - Healthy Leaf": "القطن - ورقة سليمة",
+  "Cucumber - Anthracnose": "الخيار - الأنثراكنوز",
+  "Cucumber - Downy Mildew": "الخيار - البياض الزغبي",
+  "Cucumber - Healthy": "الخيار - سليم",
+  "Eggplant - Cercospora Leaf Spot": "الباذنجان - تبقع أوراق سيركوسبورا",
+  "Eggplant - Hadda Beetles": "الباذنجان - خنفساء هادا",
+  "Eggplant - Healthy": "الباذنجان - سليم",
+  "Eggplant - Insect Pest Disease": "الباذنجان - مرض ناتج عن آفات حشرية",
+  "Eggplant - Leaf Spot": "الباذنجان - تبقع الأوراق",
+  "Eggplant - Mosaic Virus": "الباذنجان - فيروس الموزايك",
+  "Eggplant - Phomopsis Blight": "الباذنجان - لفحة فوموبسيس",
+  "Eggplant - Tobacco Caterpillar": "الباذنجان - دودة التبغ",
+  "Eggplant - Wilt": "الباذنجان - الذبول",
+  "Grape - Black Rot": "العنب - العفن الأسود",
+  "Grape - Esca (Black Measles)": "العنب - إيسكا (الحصبة السوداء)",
+  "Grape - Leaf Blight (Isariopsis Leaf Spot)": "العنب - لفحة الأوراق",
+  "Grape - Healthy": "العنب - سليم",
+  "Mango - Anthracnose": "المانجو - الأنثراكنوز",
+  "Mango - Bacterial Canker": "المانجو - التقرح البكتيري",
+  "Mango - Cutting Weevil": "المانجو - سوسة القطع",
+  "Mango - Die Back": "المانجو - موت الأفرع",
+  "Mango - Gall Midge": "المانجو - ذبابة المانجو",
+  "Mango - Healthy": "المانجو - سليم",
+  "Mango - Powdery Mildew": "المانجو - البياض الدقيقي",
+  "Mango - Sooty Mould": "المانجو - العفن السخامي",
+  "Orange - Huanglongbing (Citrus Greening)": "البرتقال - مرض اخضرار الحمضيات",
+  "Peach - Bacterial Spot": "الخوخ - التبقع البكتيري",
+  "Peach - Healthy": "الخوخ - سليم",
+  "Pepper (Bell) - Bacterial Spot": "الفلفل الحلو - التبقع البكتيري",
+  "Pepper (Bell) - Healthy": "الفلفل الحلو - سليم",
+  "Potato - Early Blight": "البطاطس - اللفحة المبكرة",
+  "Potato - Late Blight": "البطاطس - اللفحة المتأخرة",
+  "Potato - Bacterial Wilt": "البطاطس - الذبول البكتيري",
+  "Potato - Healthy": "البطاطس - سليم",
+  "Potato - Leafroll Virus": "البطاطس - فيروس التفاف الأوراق",
+  "Potato - Mosaic Virus": "البطاطس - فيروس الموزايك",
+  "Potato - Pests": "البطاطس - آفات",
+  "Potato - Phytophthora": "البطاطس - فيتوفثورا",
+  "Raspberry - Healthy": "التوت الأحمر - سليم",
+  "Rice - Bacterial Blight": "الأرز - اللفحة البكتيرية",
+  "Rice - Blast": "الأرز - اللفحة",
+  "Rice - Brown Spot": "الأرز - البقعة البنية",
+  "Rice - Healthy": "الأرز - سليم",
+  "Rice - Leaf Scald": "الأرز - لفحة الأوراق",
+  "Rice - Leaf Smut": "الأرز - تفحم الأوراق",
+  "Rice - Narrow Brown Leaf Spot": "الأرز - تبقع الأوراق البنية الضيقة",
+  "Rice - Rice Hispa": "الأرز - حشرة الهيسبا",
+  "Rice - Sheath Blight": "الأرز - لفحة الغمد",
+  "Rice - Tungro": "الأرز - تونجرو",
+  "Rose - Healthy": "الورد - سليم",
+  "Rose - Rust": "الورد - الصدأ",
+  "Rose - Slug Sawfly": "الورد - دودة الورد المنشارية",
+  "Soybean - Healthy": "فول الصويا - سليم",
+  "Squash - Powdery Mildew": "الكوسة - البياض الدقيقي",
+  "Strawberry - Leaf Scorch": "الفراولة - احتراق الأوراق",
+  "Strawberry - Healthy": "الفراولة - سليم",
+  "Tomato - Bacterial Spot": "الطماطم - التبقع البكتيري",
+  "Tomato - Early Blight": "الطماطم - اللفحة المبكرة",
+  "Tomato - Late Blight": "الطماطم - اللفحة المتأخرة",
+  "Tomato - Leaf Mold": "الطماطم - عفن الأوراق",
+  "Tomato - Septoria Leaf Spot": "الطماطم - تبقع أوراق سيبتوريا",
+  "Tomato - Spider Mites (Two-Spotted Spider Mite)": "الطماطم - العنكبوت الأحمر",
+  "Tomato - Target Spot": "الطماطم - البقعة الهدفية",
+  "Tomato - Tomato Yellow Leaf Curl Virus": "الطماطم - فيروس تجعد الأوراق الأصفر",
+  "Tomato - Tomato Mosaic Virus": "الطماطم - فيروس موزايك الطماطم",
+  "Tomato - Healthy": "الطماطم - سليم",
+  "Tomato - Spotted Wilt": "الطماطم - الذبول المرقط",
+  "Watermelon - Anthracnose": "البطيخ - الأنثراكنوز",
+  "Watermelon - Downy Mildew": "البطيخ - البياض الزغبي",
+  "Watermelon - Healthy": "البطيخ - سليم",
+  "Watermelon - Mosaic Virus": "البطيخ - فيروس الموزايك"
+};
+
+const splitClassLabel = (label) => {
+  const [plantName, ...diseaseParts] = (label || "").split(" - ");
+  return {
+    plantName: (plantName || "").trim(),
+    diseaseName: diseaseParts.join(" - ").trim()
+  };
+};
+
+const PLANT_NAME_AR = {};
+const DISEASE_NAME_AR = {};
+Object.entries(CLASS_MAPPING_AR_BY_EN).forEach(([enLabel, arLabel]) => {
+  const en = splitClassLabel(enLabel);
+  const ar = splitClassLabel(arLabel);
+  if (en.plantName && ar.plantName) {
+    PLANT_NAME_AR[en.plantName] = ar.plantName;
+  }
+  if (en.diseaseName && ar.diseaseName) {
+    DISEASE_NAME_AR[en.diseaseName] = ar.diseaseName;
+  }
+});
+
+const localizePlantDisease = (plantName, diseaseName, language) => {
+  if (language !== "ar") {
+    return { plantName, diseaseName };
+  }
+
+  const safePlant = (plantName || "").trim();
+  const safeDisease = (diseaseName || "").trim();
+  const fullKey = `${safePlant} - ${safeDisease}`;
+  const fullMatch = CLASS_MAPPING_AR_BY_EN[fullKey];
+
+  if (fullMatch) {
+    return splitClassLabel(fullMatch);
+  }
+
+  return {
+    plantName: PLANT_NAME_AR[safePlant] || safePlant,
+    diseaseName: DISEASE_NAME_AR[safeDisease] || safeDisease
+  };
+};
+
 export default function PlantAnalysis({ setStep, setProgressValue, onSendReport }) {
+  const { language } = useLanguage();
+  const t = text[language] || text.en;
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -82,12 +340,80 @@ export default function PlantAnalysis({ setStep, setProgressValue, onSendReport 
 
   // Generate AI prompt for single disease (Markdown format)
   const generateAIPrompt = (leafData) => {
+    const localizedLeaf = localizePlantDisease(leafData.plant_name, leafData.disease_name, language);
+    const localizedSeverity = (severityText[language] && severityText[language][leafData.severity]) || leafData.severity;
+
+    if (language === "ar") {
+      const diseaseSummaryAr = `
+### 🌿 المرض رقم 1
+- **اسم النبات:** ${localizedLeaf.plantName}
+- **اسم المرض:** ${localizedLeaf.diseaseName}
+- **نسبة الإصابة:** ${leafData.disease_percentage}%
+- **مستوى الشدة:** ${localizedSeverity}
+`;
+
+      return `
+# 🌱 تقرير ذكي شامل لصحة النبات
+
+أنت خبير محترف في أمراض النبات. فيما يلي طلب تحليل مرضي مبني على نتائج الذكاء الاصطناعي.
+
+---
+
+## 📋 رأس التقرير
+| الحقل | القيمة |
+|-------|--------|
+| عدد الأمراض المكتشفة | 1 |
+| تاريخ التحليل | ${new Date().toLocaleDateString()} |
+| نوع التقرير | تحليل مرض واحد |
+
+---
+${diseaseSummaryAr}
+---
+
+# 📊 هيكل التحليل المطلوب
+يرجى تقديم تقرير علمي منظم بالكامل بالأقسام التالية:
+
+## 1️⃣ نظرة عامة على المرض
+- ما هو المرض؟ نوع المسبب المرضي؟ ما تأثيره الحيوي؟
+
+## 2️⃣ الأسباب وعوامل الخطورة
+🌦 البيئة، 🌱 التربة، 💧 الري، 🌿 التسميد، 🛡 المناعة، 🔄 طرق الانتقال.
+
+## 3️⃣ تحليل نسبة الإصابة
+- المعنى العملي للنسبة المكتشفة وإمكانية السيطرة عليها.
+
+## 4️⃣ تقييم مستوى الشدة
+- المخاطر الحيوية والاقتصادية وعواقب عدم العلاج.
+
+## 5️⃣ خطة علاج خطوة بخطوة
+🚑 إجراءات فورية | ✂️ تقليم | 🧪 المواد الفعالة الموصى بها | 📅 الجدول الزمني | 🛡 الحماية.
+
+## 6️⃣ استراتيجية الوقاية طويلة المدى
+🌬 التهوية، 📏 التباعد، 💦 إدارة الري، 🌾 التسميد، 🧼 النظافة الزراعية.
+
+## 7️⃣ علامات التحذير والتدهور
+- الأعراض التي تشير إلى تفاقم الحالة ومتى يجب طلب مختص.
+
+---
+
+# 📈 الخلاصة والتوصيات النهائية
+بعد إكمال التحليل أعلاه، يرجى تقديم:
+- **تقييم عام لصحة النبات** (من 0% إلى 100%)
+- **أولويات التدخل** (قائمة مرتبة للأكثر إلحاحا)
+- **المدة المتوقعة للتعافي** (في حال الالتزام بالعلاج)
+- **أهم النقاط** (3 إلى 5 نقاط تلخص النتائج الحرجة)
+
+# ✅ قواعد التنسيق
+- استخدم Markdown ونقاط واضحة، مع أسلوب علمي مبسط.
+`;
+    }
+
     const diseaseSummary = `
 ### 🌿 Disease #1
-- **Plant Name:** ${leafData.plant_name}
-- **Disease Name:** ${leafData.disease_name}
+- **Plant Name:** ${localizedLeaf.plantName}
+- **Disease Name:** ${localizedLeaf.diseaseName}
 - **Infection Area:** ${leafData.disease_percentage}%
-- **Severity Level:** ${leafData.severity}
+- **Severity Level:** ${localizedSeverity}
 `;
 
     return `
@@ -155,20 +481,31 @@ After completing the disease analysis above, provide:
         leaf.severity !== "Not Severity Yet"
     );
 
+    const localizedDiseasedLeaves = diseasedLeaves.map((leaf) => {
+      const localizedLeaf = localizePlantDisease(leaf.plant_name, leaf.disease_name, language);
+      const localizedSeverity = (severityText[language] && severityText[language][leaf.severity]) || leaf.severity;
+      return {
+        ...leaf,
+        plant_name: localizedLeaf.plantName,
+        disease_name: localizedLeaf.diseaseName,
+        severity: localizedSeverity
+      };
+    });
+
     // If more than 5 diseases, split into batches of 3
     if (diseasedLeaves.length > 5) {
       const batches = [];
       const totalBatches = Math.ceil(diseasedLeaves.length / 3);
       
       // Calculate severity counts for header
-      const severityCounts = diseasedLeaves.reduce((acc, leaf) => {
+      const severityCounts = localizedDiseasedLeaves.reduce((acc, leaf) => {
         acc[leaf.severity] = (acc[leaf.severity] || 0) + 1;
         return acc;
       }, {});
       const severitySummary = Object.entries(severityCounts).map(([k,v]) => `${k}: ${v}`).join(", ");
 
       for (let i = 0; i < diseasedLeaves.length; i += 3) {
-        const batch = diseasedLeaves.slice(i, i + 3);
+        const batch = localizedDiseasedLeaves.slice(i, i + 3);
         const batchNum = Math.floor(i/3) + 1;
         const isFirstBatch = batchNum === 1;
         const isLastBatch = batchNum === totalBatches;
@@ -186,7 +523,17 @@ After completing the disease analysis above, provide:
           .join("\n---\n");
 
         // Header only for first batch
-        const headerSection = isFirstBatch ? `
+        const headerSection = isFirstBatch ? (language === "ar" ? `
+      ## 📋 رأس التقرير
+      | الحقل | القيمة |
+      |-------|--------|
+      | إجمالي الأمراض المكتشفة | ${diseasedLeaves.length} |
+      | توزيع الشدة | ${severitySummary} |
+      | تاريخ التحليل | ${new Date().toLocaleDateString()} |
+      | نوع التقرير | تحليل متعدد الأمراض |
+
+      ---
+      ` : `
 ## 📋 Report Header
 | Field | Value |
 |-------|-------|
@@ -196,10 +543,21 @@ After completing the disease analysis above, provide:
 | Report Type | Multi-Disease Analysis |
 
 ---
-` : '';
+      `) : '';
 
         // Summary footer only for last batch
-        const footerSection = isLastBatch ? `
+        const footerSection = isLastBatch ? (language === "ar" ? `
+      ---
+
+      # 📈 الخلاصة والتوصيات النهائية
+      بعد تحليل جميع الأمراض (${diseasedLeaves.length})، يرجى تقديم:
+      - **تقييم عام لصحة النبات** (0-100%)
+      - **أخطر مرض** (الذي يحتاج تدخلا فوريا)
+      - **ترتيب أولويات العلاج** (من الأعلى للأقل)
+      - **المدة المتوقعة للتعافي**
+      - **خطة إدارة متكاملة** (لعلاج الأمراض المتعددة بكفاءة)
+      - **أهم النقاط** (5 نقاط حرجة)
+      ` : `
 ---
 
 # 📈 Final Summary & Recommendations
@@ -210,67 +568,127 @@ After analyzing ALL ${diseasedLeaves.length} diseases, provide a comprehensive c
 - **Estimated Recovery Timeline** (expected time to full recovery)
 - **Integrated Management Plan** (how to treat multiple diseases together efficiently)
 - **Key Takeaways** (5 bullet points summarizing the most critical findings for all diseases)
-` : '';
+`) : '';
 
         batches.push(`
-# 🌱 Comprehensive Plant Health Smart Report
+# 🌱 ${language === "ar" ? "تقرير ذكي شامل لصحة النبات" : "Comprehensive Plant Health Smart Report"}
 
-You are a professional plant pathology expert. Analyze these diseases:
+${language === "ar" ? "أنت خبير محترف في أمراض النبات. حلل الأمراض التالية:" : "You are a professional plant pathology expert. Analyze these diseases:"}
 ${headerSection}
 ---
 ${diseasesList}
 ---
 
-# 📊 Required Analysis Structure
-For *each disease listed above*, provide a fully structured scientific report using the following sections:
+# 📊 ${language === "ar" ? "هيكل التحليل المطلوب" : "Required Analysis Structure"}
+${language === "ar" ? "لكل مرض مذكور أعلاه، قدم تقريرا علميا منظما بالكامل بالأقسام التالية:" : "For *each disease listed above*, provide a fully structured scientific report using the following sections:"}
 
-## 1️⃣ Disease Overview
-- What is the disease? Pathogen type? Biological impact?
+## 1️⃣ ${language === "ar" ? "نظرة عامة على المرض" : "Disease Overview"}
+- ${language === "ar" ? "ما هو المرض؟ ما نوع المسبب المرضي؟ وما تأثيره الحيوي؟" : "What is the disease? Pathogen type? Biological impact?"}
 
-## 2️⃣ Causes & Risk Factors
-🌦 Environment, 🌱 Soil, 💧 Irrigation, 🌿 Fertilization, 🛡 Immunity, 🔄 Transmission.
+## 2️⃣ ${language === "ar" ? "الأسباب وعوامل الخطورة" : "Causes & Risk Factors"}
+${language === "ar" ? "🌦 البيئة، 🌱 التربة، 💧 الري، 🌿 التسميد، 🛡 المناعة، 🔄 الانتقال." : "🌦 Environment, 🌱 Soil, 💧 Irrigation, 🌿 Fertilization, 🛡 Immunity, 🔄 Transmission."}
 
-## 3️⃣ Infection Percentage Analysis
-- Practical meaning of the detected percentage and control possibility.
+## 3️⃣ ${language === "ar" ? "تحليل نسبة الإصابة" : "Infection Percentage Analysis"}
+- ${language === "ar" ? "المعنى العملي للنسبة المكتشفة وإمكانية السيطرة عليها." : "Practical meaning of the detected percentage and control possibility."}
 
-## 4️⃣ Severity Level Assessment
-- Biological/Economic risk and consequences of non-treatment.
+## 4️⃣ ${language === "ar" ? "تقييم مستوى الشدة" : "Severity Level Assessment"}
+- ${language === "ar" ? "المخاطر الحيوية والاقتصادية وعواقب عدم العلاج." : "Biological/Economic risk and consequences of non-treatment."}
 
-## 5️⃣ Step-by-Step Treatment Plan
-🚑 Immediate Actions | ✂️ Pruning | 🧪 Recommended Active Ingredients | 📅 Schedule | 🛡 Protection.
+## 5️⃣ ${language === "ar" ? "خطة علاج خطوة بخطوة" : "Step-by-Step Treatment Plan"}
+${language === "ar" ? "🚑 إجراءات فورية | ✂️ تقليم | 🧪 مواد فعالة موصى بها | 📅 جدول زمني | 🛡 حماية." : "🚑 Immediate Actions | ✂️ Pruning | 🧪 Recommended Active Ingredients | 📅 Schedule | 🛡 Protection."}
 
-## 6️⃣ Long-Term Prevention Strategy
-🌬 Ventilation, 📏 Spacing, 💦 Irrigation, 🌾 Fertilization, 🧼 Sanitation.
+## 6️⃣ ${language === "ar" ? "استراتيجية الوقاية طويلة المدى" : "Long-Term Prevention Strategy"}
+${language === "ar" ? "🌬 تهوية، 📏 تباعد، 💦 إدارة الري، 🌾 التسميد، 🧼 النظافة الزراعية." : "🌬 Ventilation, 📏 Spacing, 💦 Irrigation, 🌾 Fertilization, 🧼 Sanitation."}
 
-## 7️⃣ Warning Signs & Escalation
-- Symptoms indicating worsening and when professional consultation is needed.
+## 7️⃣ ${language === "ar" ? "علامات التحذير والتدهور" : "Warning Signs & Escalation"}
+- ${language === "ar" ? "الأعراض التي تشير للتدهور ومتى يلزم الرجوع لمختص." : "Symptoms indicating worsening and when professional consultation is needed."}
 ${footerSection}
-# ✅ Formatting Rules
-- Use Markdown, bullet points, and keep it scientific yet clear.
+# ✅ ${language === "ar" ? "قواعد التنسيق" : "Formatting Rules"}
+- ${language === "ar" ? "استخدم Markdown ونقاط واضحة وبأسلوب علمي مبسط." : "Use Markdown, bullet points, and keep it scientific yet clear."}
 `);
       }
       return { isBatch: true, prompts: batches };
     }
 
     // For 5 or fewer, use single prompt
-    const diseasesList = diseasedLeaves
+    const diseasesList = localizedDiseasedLeaves
       .map(
         (leaf, idx) => `
-### 🌿 Disease #${idx + 1}
-- **Plant Name:** ${leaf.plant_name}
-- **Disease Name:** ${leaf.disease_name}
-- **Infection Area:** ${leaf.disease_percentage}%
-- **Severity Level:** ${leaf.severity}
+### 🌿 ${language === "ar" ? `المرض رقم ${idx + 1}` : `Disease #${idx + 1}`}
+- **${language === "ar" ? "اسم النبات" : "Plant Name"}:** ${leaf.plant_name}
+- **${language === "ar" ? "اسم المرض" : "Disease Name"}:** ${leaf.disease_name}
+- **${language === "ar" ? "نسبة الإصابة" : "Infection Area"}:** ${leaf.disease_percentage}%
+- **${language === "ar" ? "مستوى الشدة" : "Severity Level"}:** ${leaf.severity}
 `
       )
       .join("\n---\n");
 
     // Calculate severity counts for header
-    const severityCounts = diseasedLeaves.reduce((acc, leaf) => {
+    const severityCounts = localizedDiseasedLeaves.reduce((acc, leaf) => {
       acc[leaf.severity] = (acc[leaf.severity] || 0) + 1;
       return acc;
     }, {});
     const severitySummary = Object.entries(severityCounts).map(([k,v]) => `${k}: ${v}`).join(", ");
+
+    if (language === "ar") {
+      return `
+# 🌱 تقرير ذكي شامل لصحة النبات
+
+أنت خبير محترف في أمراض النبات. فيما يلي طلب تحليل متعدد الأمراض بناء على نتائج الذكاء الاصطناعي.
+
+---
+
+## 📋 رأس التقرير
+| الحقل | القيمة |
+|-------|--------|
+| إجمالي الأمراض المكتشفة | ${diseasedLeaves.length} |
+| توزيع الشدة | ${severitySummary} |
+| تاريخ التحليل | ${new Date().toLocaleDateString()} |
+| نوع التقرير | تحليل متعدد الأمراض |
+
+---
+${diseasesList}
+---
+
+# 📊 هيكل التحليل المطلوب
+لكل مرض مذكور أعلاه، قدم تقريرا علميا منظما بالكامل بالأقسام التالية:
+
+## 1️⃣ نظرة عامة على المرض
+- ما هو المرض؟ ما نوع المسبب المرضي؟ وما تأثيره الحيوي؟
+
+## 2️⃣ الأسباب وعوامل الخطورة
+🌦 البيئة، 🌱 التربة، 💧 الري، 🌿 التسميد، 🛡 المناعة، 🔄 الانتقال.
+
+## 3️⃣ تحليل نسبة الإصابة
+- المعنى العملي للنسبة المكتشفة وإمكانية السيطرة عليها.
+
+## 4️⃣ تقييم مستوى الشدة
+- المخاطر الحيوية والاقتصادية وعواقب عدم العلاج.
+
+## 5️⃣ خطة علاج خطوة بخطوة
+🚑 إجراءات فورية | ✂️ تقليم | 🧪 مواد فعالة موصى بها | 📅 جدول زمني | 🛡 حماية.
+
+## 6️⃣ استراتيجية الوقاية طويلة المدى
+🌬 تهوية، 📏 تباعد، 💦 إدارة الري، 🌾 التسميد، 🧼 النظافة الزراعية.
+
+## 7️⃣ علامات التحذير والتدهور
+- الأعراض التي تشير للتدهور ومتى يلزم الرجوع لمختص.
+
+---
+
+# 📈 الخلاصة والتوصيات النهائية
+بعد تحليل جميع الأمراض المذكورة أعلاه، قدم خلاصة شاملة تشمل:
+- **تقييم عام لصحة النبات** (0-100%)
+- **أخطر مرض** (الذي يحتاج تدخلا فوريا)
+- **ترتيب أولويات العلاج** (من الأكثر إلحاحا إلى الأقل)
+- **المدة المتوقعة للتعافي**
+- **خطة إدارة متكاملة** (لعلاج الأمراض المتعددة بكفاءة)
+- **أهم النقاط** (5 نقاط تلخص أهم النتائج)
+
+# ✅ قواعد التنسيق
+- استخدم Markdown ونقاط واضحة وبأسلوب علمي مبسط.
+`;
+    }
 
     return `
 # 🌱 Comprehensive Plant Health Smart Report
@@ -685,17 +1103,25 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
 
   const offset = circumference - (progress / 100) * circumference;
   const current = classifications[currentIndex] || defaultClassification;
+  const localizeStatus = (value) => (statusText[language] && statusText[language][value]) || value;
+  const localizeSeverity = (value) => (severityText[language] && severityText[language][value]) || value;
   // determine display source (prefer camResult which is set when clicking arrows)
   const infoSource = camResult || current;
   const diseaseText = infoSource && infoSource.disease === "Awaiting Detection" ? "" : (infoSource && infoSource.disease) || "";
   const categoryText = (infoSource && infoSource.category) || "";
+  const localizedCurrentNames = localizePlantDisease(diseaseText, categoryText, language);
+  const displayPlantNameText = localizedCurrentNames.plantName;
+  const displayDiseaseNameText = localizedCurrentNames.diseaseName;
   const confidenceText = (infoSource && infoSource.confidence) || 0;
   const displayDiseasePercent = infoSource && infoSource.diseasePercentage ? infoSource.diseasePercentage : 0;
   const displaySeverityText = (infoSource && infoSource.severity) || "";
+  const displaySeverityLabel = localizeSeverity(displaySeverityText);
   const showDiseaseRow = displayDiseasePercent > 0 && displaySeverityText !== "Healthy" && displaySeverityText !== "Not Severity Yet";
   const displayImage = displaySeverityText === "Healthy"
     ? (current.image || classImg)
     : (camImage || (current && current.image) || cropImage || classImg);
+  const prevArrow = language === "ar" ? "▶" : "◀";
+  const nextArrow = language === "ar" ? "◀" : "▶";
 
   return (
     <div className="container">
@@ -720,13 +1146,13 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                     <div className="image-upload">
                       <img src={uploadImg} alt="upload" />
                     </div>
-                    <h2>Drag and drop an image here</h2>
-                    <p>Supported formats: JPG, PNG. Max file size 5MB.</p>
+                    <h2>{t.dragDrop}</h2>
+                    <p>{t.formats}</p>
                     <button
                       className="upload-btn"
                       onClick={() => fileInputRef.current.click()}
                     >
-                      Upload Image
+                      {t.uploadImage}
                     </button>
                   </>
                 )}
@@ -745,7 +1171,7 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                     </svg>
 
                     <div className="progress-ring-text">
-                      {status === "Completed" ? "Done" : `${progress}%`}
+                      {status === "Completed" ? t.done : `${progress}%`}
                     </div>
 
                     <button className="cancel-btn" onClick={handleCancel}>
@@ -771,15 +1197,15 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
 
         <div className="card small-card detection-card">
           <div className="detection-header">
-            <h2 className="detection-title">Object Detection</h2>
+            <h2 className="detection-title">{t.objectDetection}</h2>
             <p className="detection-subtitle">
-              Object detection result with cropped plant regions
-              {status === "Completed" && <> — Detected {totalBoxes} leaf(s)</>}
+              {t.detectionSubtitle}
+              {status === "Completed" && <> — {t.detectedLeaves} {totalBoxes} {t.leaves}</>}
             </p>
           </div>
 
           <div className="detection-image-box">
-            <span className="completed-badge">{status}</span>
+            <span className="completed-badge">{localizeStatus(status)}</span>
             <div className="detection-inner-layer">
               <img src={finalImage || detectImg} alt="Detection" />
             </div>
@@ -791,19 +1217,19 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
 
           <div className="classification-header">
             <div>
-              <h2 className="classification-title">Classify + Grad-CAM</h2>
+              <h2 className="classification-title">{t.classify}</h2>
               <p className="classification-subtitle">
-                AI-based plant disease analysis
+                {t.classifySubtitle}
               </p>
             </div>
             {classifications.length > 1 && (
-              <div className="arrow-controls">
-                <button onClick={() => handleChangeIndex(currentIndex - 1)}>◀</button>
+              <div className={`arrow-controls ${language === "ar" ? "rtl" : "ltr"}`}>
+                <button type="button" onClick={() => handleChangeIndex(currentIndex - 1)}>{prevArrow}</button>
                 <span style={{ whiteSpace: "nowrap" }}>{currentIndex + 1} / {classifications.length}</span>
-                <button onClick={() => handleChangeIndex(currentIndex + 1)}>▶</button>
+                <button type="button" onClick={() => handleChangeIndex(currentIndex + 1)}>{nextArrow}</button>
               </div>
             )}
-            <span className="classifier-badge">{classificationStatus}</span>
+            <span className="classifier-badge">{localizeStatus(classificationStatus)}</span>
           </div>
 
           <div className="classification-content">
@@ -818,12 +1244,12 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
 
             <div className="classification-info">
               <div className="info-group">
-                <p className="info-label">Plant Name :</p>
-                <p className="info-value">{diseaseText || "Not Detected Yet"}</p>
+                <p className="info-label">{t.plantName} :</p>
+                <p className="info-value">{displayPlantNameText || t.notDetectedYet}</p>
               </div>
               <div className="info-group">
-                <p className="info-label">Disease Name :</p>
-                <p className="info-value">{categoryText || "Not Classified Yet"}</p>
+                <p className="info-label">{t.diseaseName} :</p>
+                <p className="info-value">{displayDiseaseNameText || t.notClassifiedYet}</p>
               </div>
             </div>
           </div>
@@ -832,9 +1258,12 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
             <div className="confidence-row">
               <div className="confidence-item">
                 <p className="confidence-text">
-                  confidence:
+                  {t.confidence}:
                   <span className="confidence-value">
-                    {confidenceText}% {Number(confidenceText) > 0 ? "(High Confidence)" : "(Awaiting Analysis)"}
+                    {confidenceText}%
+                    <span className="confidence-sub-label">
+                      {Number(confidenceText) > 0 ? `(${t.highConfidence})` : `(${t.awaitingAnalysis})`}
+                    </span>
                   </span>
                 </p>
                 <div className="confidence-bar-bg">
@@ -848,9 +1277,10 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
               {showDiseaseRow && (
                 <div className="confidence-item">
                   <p className="confidence-text">
-                    Disease :
+                    {t.disease} :
                     <span className="confidence-value">
-                      {displayDiseasePercent}% ({displaySeverityText})
+                      {displayDiseasePercent}%
+                      <span className="confidence-sub-label">({displaySeverityLabel})</span>
                     </span>
                   </p>
                   <div className="confidence-bar-bg">
@@ -874,15 +1304,15 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
         {/* Segmentation (dynamic mask) */}
         <div className="card small-card segmentation-card">
           <div className="segmentation-header">
-            <h2 className="segmentation-title">Segmentation</h2>
+            <h2 className="segmentation-title">{t.segmentation}</h2>
             <p className="segmentation-subtitle">
-              Segmentation mask visualization
+              {t.segmentationSubtitle}
             </p>
           </div>
 
           <div className="segmentation-image-box">
             <span className="completed-badge">
-              {maskImage ? "Completed" : segStatus === "Processing" ? "Working" : segStatus}
+              {maskImage ? localizeStatus("Completed") : segStatus === "Processing" ? t.working : localizeStatus(segStatus)}
             </span>
             <div className="segmentation-inner-layer">
               <img src={maskImage || segmentImg} alt="Segmentation" />
@@ -894,7 +1324,7 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
 
       {classificationStatus === "Completed" && classifications.length > 0 && classifications[0].disease !== "" && (
         <p className="report-link-text" onClick={handleGenerateReport}>
-          View Analysis Report
+          {t.viewReport}
         </p>
       )}
 
@@ -902,7 +1332,7 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
         <div className="report-modal-overlay" onClick={() => setShowReportModal(false)}>
           <div className="report-modal" onClick={(e) => e.stopPropagation()}>
             <div className="report-modal-header">
-              <h2 title={`Health: ${reportData.leaves.length > 0 ? Math.round((reportData.leaves.filter(l => l.severity === "Healthy").length / reportData.leaves.length) * 100) : 0}%`}>Disease Analysis Report</h2>
+              <h2 title={`${t.health}: ${reportData.leaves.length > 0 ? Math.round((reportData.leaves.filter(l => l.severity === "Healthy").length / reportData.leaves.length) * 100) : 0}%`}>{t.reportTitle}</h2>
               <button 
                 className="report-close-btn"
                 onClick={() => setShowReportModal(false)}
@@ -913,7 +1343,7 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
 
             <div className="report-modal-content">
               <div className="report-leaves-list">
-                <h3>Detected Diseases</h3>
+                <h3>{t.detectedDiseases}</h3>
 
                 {/* donut stats */}
                 {reportData.leaves.length > 0 && (() => {
@@ -935,15 +1365,15 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                           const angle = (Math.atan2(x, -y) * 180 / Math.PI + 360) % 360;
                           const threshold = (diseasedPct/100) * 360;
                           if (angle < threshold) {
-                            setHoveredSegment(`Diseased ${diseasedPct}%`);
+                            setHoveredSegment(`${t.diseased} ${diseasedPct}%`);
                           } else {
-                            setHoveredSegment(`Healthy ${healthyPct}%`);
+                            setHoveredSegment(`${t.healthy} ${healthyPct}%`);
                           }
                         }}
                         style={{"--pct": diseasedPct + "%"}}
                       >
                         <div className="donut-center">
-                          {hoveredSegment || `${diseasedPct}% diseased`}
+                          {hoveredSegment || `${diseasedPct}% ${t.diseased}`}
                         </div>
                       </div>
                     </div>
@@ -954,6 +1384,9 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                   <>
                     <div className="leaves-cards-with-images">
                       {reportData.leaves.map((leaf, idx) => (
+                        (() => {
+                          const localizedLeaf = localizePlantDisease(leaf.plant_name, leaf.disease_name, language);
+                          return (
                         <div key={idx} className="leaf-card-with-image">
                           <div className="leaf-image-col">
                             {leaf.image && (
@@ -961,21 +1394,23 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                             )}
                           </div>
                           <div className="leaf-info-col">
-                            <h4>Disease #{leaf.leaf_id}</h4>
-                            <p><strong>Plant:</strong> {leaf.plant_name}</p>
-                            <p><strong>Disease:</strong> {leaf.disease_name}</p>
-                            <p><strong>Infection:</strong> {leaf.disease_percentage}%</p>
-                            <p><strong>Severity:</strong> {leaf.severity}</p>
+                            <h4>{t.diseaseNumber} #{leaf.leaf_id}</h4>
+                            <p><strong>{t.plant}:</strong> {localizedLeaf.plantName}</p>
+                            <p><strong>{t.disease}:</strong> {localizedLeaf.diseaseName}</p>
+                            <p><strong>{t.infection}:</strong> {leaf.disease_percentage}%</p>
+                            <p><strong>{t.severity}:</strong> {localizeSeverity(leaf.severity)}</p>
                           {leaf.severity !== "Healthy" && (
                             <button
                               className="send-to-ai-btn"
                               onClick={() => handleSendToAI(leaf, true)}
                             >
-                              Get Smart Report
+                              {t.getSmartReport}
                             </button>
                           )}
                           </div>
                         </div>
+                          );
+                        })()
                       ))}
                     </div>
 
@@ -984,12 +1419,12 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                         className="send-all-btn"
                         onClick={() => handleSendToAI("all", true)}
                       >
-                        Get Full Smart Report (for all diseases)
+                        {t.getFullSmartReport}
                       </button>
                     )}
                   </>
                 ) : (
-                  <p>No diseased leaves detected.</p>
+                  <p>{t.noDiseasedLeaves}</p>
                 )}
               </div>
             </div>

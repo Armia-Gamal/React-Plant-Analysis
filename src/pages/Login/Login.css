@@ -80,12 +80,12 @@
   margin: 8px 0 14px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
-  padding-right: 40px;
+  padding-inline-end: 40px;
 }
 
 .login-password-field i {
   position: absolute;
-  right: 12px;
+  inset-inline-end: 12px;
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
@@ -96,6 +96,16 @@
 
 .login-password-field i:hover {
   color: #42d3c4;
+}
+
+[dir="rtl"] .login-password-field input {
+  padding-right: 12px;
+  padding-left: 40px;
+}
+
+[dir="rtl"] .login-password-field i {
+  right: auto;
+  left: 12px;
 }
 
 
@@ -203,6 +213,10 @@
 }
 
 .login-right img {
-  margin-right: 200px;
+  margin-inline-end: 200px;
   width: var(--image-width);
+}
+
+[dir="rtl"] .login-right img {
+  margin-right: 0;
 }
