@@ -1,15 +1,35 @@
 import { useState, useEffect, useRef } from "react";
 import { marked } from "marked";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { onAuthStateChanged } from "firebase/auth";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  increment,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where
+} from "firebase/firestore";
 import htmlToPdfmake from "html-to-pdfmake";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFontsSource from "../../../assets/pdf/vfs_fonts.js?raw";
 import { useLanguage } from "../../../context/LanguageContext";
+import { auth, db } from "../../../firebase";
 import "./AIAssistant.css";
 
 // Import logo as base64 data URL for PDF generation (works in production)
 import nabtaLogo from "../../../assets/images/New Project (1).png";
 import arabicNabtaLogo from "../../../assets/images/das.png";
+import sidebarOpenImg from "../../../assets/images/sidebar (1).png";
+import sidebarClosedImg from "../../../assets/images/sidebar.png";
 
 const parseLocalVfs = (source) => {
   try {
@@ -1094,6 +1114,20 @@ function buildPdfDefinition({
 const text = {
   en: {
     welcome: "Welcome to Nabta AI Assistant! 🌿 I am your personal botanist. How can I help your garden grow today? I can help with plant identification, care tips, or diagnosing diseases.",
+    chats: "Chats",
+    newChatSidebar: "New chat",
+    untitledChat: "New chat",
+    noChats: "No chats yet",
+    loadingChats: "Loading chats...",
+    chatsLoadError: "Could not load chats",
+    collapseChats: "Collapse chats",
+    expandChats: "Expand chats",
+    deleteChat: "Delete chat",
+    deleteChatTitle: "Delete chat?",
+    deleteChatConfirm: "Delete this chat permanently?",
+    cancelDelete: "Cancel",
+    confirmDelete: "Delete",
+    menuLabel: "Chat options",
     downloadReport: "Download Professional PDF Report",
     downloading: "Downloading...",
     loading: "Examining roots...",
@@ -1107,6 +1141,20 @@ const text = {
   },
   ar: {
     welcome: "مرحباً بك في مساعد نبتة الذكي! 🌿 أنا خبيرك النباتي الشخصي. كيف يمكنني مساعدتك في العناية بنباتاتك اليوم؟ أقدر أساعدك في التعرف على النباتات، نصائح العناية، وتشخيص الأمراض.",
+    chats: "المحادثات",
+    newChatSidebar: "محادثة جديدة",
+    untitledChat: "محادثة جديدة",
+    noChats: "لا توجد محادثات بعد",
+    loadingChats: "جار تحميل المحادثات...",
+    chatsLoadError: "تعذر تحميل المحادثات",
+    collapseChats: "طي المحادثات",
+    expandChats: "فتح المحادثات",
+    deleteChat: "حذف المحادثة",
+    deleteChatTitle: "حذف المحادثة؟",
+    deleteChatConfirm: "هل تريد حذف هذه المحادثة نهائيا؟",
+    cancelDelete: "إلغاء",
+    confirmDelete: "حذف",
+    menuLabel: "خيارات المحادثة",
     downloadReport: "تنزيل تقرير PDF احترافي",
     downloading: "جاري التنزيل...",
     loading: "... فحص الجذور",
@@ -1120,7 +1168,34 @@ const text = {
   }
 };
 
-const welcomeMessages = Object.values(text).map((entry) => entry.welcome);
+function getChatTitleFromText(value, fallbackTitle) {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return fallbackTitle;
+  }
+
+  return normalized.length > 44 ? `${normalized.slice(0, 44)}...` : normalized;
+}
+
+function getChatPreviewFromText(value) {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  return normalized.length > 70 ? `${normalized.slice(0, 70)}...` : normalized;
+}
+
+function getSessionTimeValue(session) {
+  const rawValue = session?.updatedAt || session?.createdAt || null;
+  if (!rawValue) {
+    return 0;
+  }
+
+  const dateValue = rawValue?.toDate ? rawValue.toDate() : new Date(rawValue);
+  const time = dateValue.getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
 
 export default function AIAssistant({
   pendingReport,
@@ -1155,27 +1230,16 @@ export default function AIAssistant({
   - Be encouraging.
   `;
 
-  const initialMessages = [
-    {
-      id: 1,
-      role: "bot",
-      text: t.welcome,
-      isArabic: language === "ar"
-    }
-  ];
-
-  // Load messages from localStorage or use initial messages
-  const STORAGE_KEY = "nabta_messages";
-
-  const [messages, setMessages] = useState(() => {
-    try {
-      // migrate old storage if present
-      const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("plantifipia_messages");
-      return saved ? JSON.parse(saved) : initialMessages;
-    } catch {
-      return initialMessages;
-    }
-  });
+  const [messages, setMessages] = useState([]);
+  const [chatSessions, setChatSessions] = useState([]);
+  const [activeChatId, setActiveChatId] = useState("");
+  const [authUser, setAuthUser] = useState(null);
+  const [isChatSessionsLoading, setIsChatSessionsLoading] = useState(true);
+  const [chatSessionsError, setChatSessionsError] = useState("");
+  const [isSessionsCollapsed, setIsSessionsCollapsed] = useState(false);
+  const [openSessionMenuId, setOpenSessionMenuId] = useState("");
+  const [pendingDeleteChatId, setPendingDeleteChatId] = useState("");
+  const creatingChatRef = useRef(false);
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1189,14 +1253,27 @@ export default function AIAssistant({
   const textareaRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const sessionsPanelRef = useRef(null);
   const hasProcessedReportRef = useRef(false);
   const [activeSearchMatchIndex, setActiveSearchMatchIndex] = useState(0);
 
   const isArabic = detectArabic;
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const expandSidebarIcon = language === "ar" ? sidebarClosedImg : sidebarOpenImg;
+  const collapseSidebarIcon = language === "ar" ? sidebarOpenImg : sidebarClosedImg;
+  const visibleMessages = messages.length > 0
+    ? messages
+    : [
+        {
+          id: "welcome",
+          role: "bot",
+          text: t.welcome,
+          isArabic: language === "ar"
+        }
+      ];
 
   const filteredMessages = normalizedSearchQuery
-    ? messages.filter((msg) => {
+    ? visibleMessages.filter((msg) => {
         const searchableText = [
           msg.text,
           msg.originalText,
@@ -1209,10 +1286,156 @@ export default function AIAssistant({
 
         return searchableText.includes(normalizedSearchQuery);
       })
-    : messages;
+    : visibleMessages;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const generateChatTitleFromMessage = async (messageText) => {
+    const raw = String(messageText || "").trim();
+    if (!raw) {
+      return t.untitledChat;
+    }
+
+    try {
+      const titlePrompt = language === "ar"
+        ? `استخرج عنوان قصير جدا من الرسالة التالية (3 إلى 6 كلمات فقط بدون علامات اقتباس):\n${raw}`
+        : `Generate a very short chat title from this message (3 to 6 words, no quotes):\n${raw}`;
+
+      const titleResponse = await cohereChat({
+        message: titlePrompt,
+        preamble: "You generate concise chat titles only.",
+        temperature: 0.2
+      });
+
+      const cleanTitle = String(titleResponse?.data?.text || "")
+        .replace(/[\n\r]+/g, " ")
+        .replace(/^['"`\-\s]+|['"`\-\s]+$/g, "")
+        .trim();
+
+      return getChatTitleFromText(cleanTitle || raw, t.untitledChat);
+    } catch {
+      return getChatTitleFromText(raw, t.untitledChat);
+    }
+  };
+
+  const isChatSessionEmpty = async (chatId) => {
+    if (!authUser?.uid || !chatId) {
+      return false;
+    }
+
+    const currentSession = chatSessions.find((session) => session.id === chatId);
+    if (typeof currentSession?.messageCount === "number") {
+      return currentSession.messageCount <= 0;
+    }
+
+    const messagesRef = collection(db, "chatAi", chatId, "messages");
+    const snap = await getDocs(query(messagesRef, limit(1)));
+    return snap.empty;
+  };
+
+  const deleteChatSession = async (chatId) => {
+    if (!authUser?.uid || !chatId) {
+      return false;
+    }
+
+    try {
+      const messagesRef = collection(db, "chatAi", chatId, "messages");
+      const messagesSnap = await getDocs(messagesRef);
+      const deletePromises = messagesSnap.docs.map((messageDoc) => deleteDoc(messageDoc.ref));
+      await Promise.all(deletePromises);
+      await deleteDoc(doc(db, "chatAi", chatId));
+
+      if (activeChatId === chatId) {
+        setActiveChatId("");
+        setMessages([]);
+      }
+
+      setOpenSessionMenuId("");
+      setPendingDeleteChatId("");
+      return true;
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+      return false;
+    }
+  };
+
+  const createChatSessionDocument = async () => {
+    if (!authUser?.uid || creatingChatRef.current) {
+      return null;
+    }
+
+    creatingChatRef.current = true;
+    try {
+      const chatRef = doc(collection(db, "chatAi"));
+      await setDoc(chatRef, {
+        ownerId: authUser.uid,
+        title: t.untitledChat,
+        preview: "",
+        messageCount: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      setActiveChatId(chatRef.id);
+      return chatRef.id;
+    } catch (error) {
+      console.error("Failed to create chatAi session:", error);
+      return null;
+    } finally {
+      creatingChatRef.current = false;
+    }
+  };
+
+  const startNewChatDraft = async () => {
+    if (activeChatId) {
+      const shouldDeleteCurrent = await isChatSessionEmpty(activeChatId);
+      if (shouldDeleteCurrent) {
+        await deleteChatSession(activeChatId);
+      }
+    }
+
+    setActiveChatId("");
+    setMessages([]);
+    setInput("");
+    setOpenSessionMenuId("");
+  };
+
+  const handleConfirmDeleteChat = async () => {
+    if (!pendingDeleteChatId) {
+      return;
+    }
+
+    await deleteChatSession(pendingDeleteChatId);
+  };
+
+  const saveMessageToChat = async (chatId, message, options = {}) => {
+    if (!authUser?.uid || !chatId || !message || message.isDownloadLink) {
+      return;
+    }
+
+    const messagesRef = collection(db, "chatAi", chatId, "messages");
+    await addDoc(messagesRef, {
+      role: message.role,
+      text: message.text,
+      isArabic: !!message.isArabic,
+      isReport: !!message.isReport,
+      createdAt: serverTimestamp()
+    });
+
+    const preview = getChatPreviewFromText(message.text);
+    const chatRef = doc(db, "chatAi", chatId);
+    const patch = {
+      preview,
+      messageCount: increment(1),
+      updatedAt: serverTimestamp()
+    };
+
+    if (options.useMessageAsTitle) {
+      patch.title = await generateChatTitleFromMessage(message.text);
+    }
+
+    await updateDoc(chatRef, patch);
   };
 
   const downloadPdf = async (markdownText, reportLanguage) => {
@@ -1337,12 +1560,136 @@ export default function AIAssistant({
   };
 
   useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setAuthUser(user || null);
+      if (!user) {
+        setChatSessions([]);
+        setActiveChatId("");
+        setMessages([]);
+        setChatSessionsError("");
+      }
+    });
+
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (!sessionsPanelRef.current?.contains(event.target)) {
+        setOpenSessionMenuId("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  useEffect(() => {
+    if (isSessionsCollapsed) {
+      setOpenSessionMenuId("");
+    }
+  }, [isSessionsCollapsed]);
+
+  useEffect(() => {
+    if (!authUser?.uid) {
+      return () => {};
+    }
+
+    setIsChatSessionsLoading(true);
+    setChatSessionsError("");
+    const sessionsRef = collection(db, "chatAi");
+    const sessionsQuery = query(
+      sessionsRef,
+      where("ownerId", "==", authUser.uid),
+      orderBy("updatedAt", "desc"),
+      limit(100)
+    );
+
+    const applySessionsSnapshot = async (snapshot) => {
+      const sessionItems = snapshot.docs
+        .map((snap) => ({ id: snap.id, ...snap.data() }))
+        .sort((a, b) => getSessionTimeValue(b) - getSessionTimeValue(a));
+
+      setChatSessions(sessionItems);
+      setIsChatSessionsLoading(false);
+
+      if (!sessionItems.length) {
+        setActiveChatId("");
+        return;
+      }
+
+      setActiveChatId((prev) => {
+        if (prev && sessionItems.some((session) => session.id === prev)) {
+          return prev;
+        }
+        return sessionItems[0].id;
+      });
+      setOpenSessionMenuId("");
+    };
+
+    let fallbackUnsub = null;
+
+    const handlePrimaryError = (error) => {
+      console.warn("Primary chat sessions query failed, falling back:", error);
+      setChatSessionsError(error?.message || "query-failed");
+
+      const fallbackQuery = query(
+        sessionsRef,
+        where("ownerId", "==", authUser.uid),
+        limit(100)
+      );
+
+      fallbackUnsub = onSnapshot(
+        fallbackQuery,
+        (fallbackSnapshot) => {
+          setChatSessionsError("");
+          applySessionsSnapshot(fallbackSnapshot);
+        },
+        (fallbackError) => {
+          console.error("Fallback chat sessions query failed:", fallbackError);
+          setIsChatSessionsLoading(false);
+          setChatSessionsError(fallbackError?.message || "fallback-query-failed");
+        }
+      );
+    };
+
+    const unsub = onSnapshot(sessionsQuery, applySessionsSnapshot, handlePrimaryError);
+
+    return () => {
+      unsub();
+      if (fallbackUnsub) {
+        fallbackUnsub();
+      }
+    };
+  }, [authUser?.uid]);
+
+  useEffect(() => {
+    if (!authUser?.uid || !activeChatId) {
+      setMessages([]);
+      return () => {};
+    }
+
+    const messagesRef = collection(db, "chatAi", activeChatId, "messages");
+    const messagesQuery = query(messagesRef, orderBy("createdAt", "asc"));
+
+    const unsub = onSnapshot(messagesQuery, (snapshot) => {
+      const nextMessages = snapshot.docs.map((snap) => ({
+        id: snap.id,
+        ...snap.data()
+      }));
+      setMessages(nextMessages);
+    });
+
+    return () => unsub();
+  }, [authUser?.uid, activeChatId]);
+
+  useEffect(() => {
     scrollToBottom();
-  }, [messages, loading, typedText]);
+  }, [messages, loading, typedText, activeChatId]);
 
   useEffect(() => {
     setActiveSearchMatchIndex(0);
-  }, [normalizedSearchQuery]);
+  }, [normalizedSearchQuery, activeChatId]);
 
   useEffect(() => {
     const matchElements = messagesContainerRef.current
@@ -1404,25 +1751,22 @@ export default function AIAssistant({
     });
   }, [searchJumpRequest, normalizedSearchQuery]);
 
-  // Scroll to bottom on initial mount
   useEffect(() => {
-    // Wait for DOM to fully render then scroll
     const timer = setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }, 200);
     return () => clearTimeout(timer);
-  }, []);
-
-  // Save messages to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-  }, [messages]);
+  }, [activeChatId]);
 
   // Typing animation effect
   useEffect(() => {
     if (!typingMessageId) return;
     const msg = messages.find(m => m.id === typingMessageId);
-    if (!msg) return;
+    if (!msg) {
+      setTypingMessageId(null);
+      setTypedText("");
+      return;
+    }
 
     const fullText = msg.text;
     if (typedText.length >= fullText.length) {
@@ -1498,41 +1842,10 @@ export default function AIAssistant({
   // Listen for new chat trigger from navbar
   useEffect(() => {
     if (newChatTrigger > 0) {
-      setMessages([
-        {
-          id: 1,
-          role: "bot",
-          text: t.welcome,
-          isArabic: language === "ar"
-        }
-      ]);
-      setInput("");
+      startNewChatDraft();
       hasProcessedReportRef.current = false;
     }
-  }, [newChatTrigger]);
-
-  useEffect(() => {
-    setMessages((prev) => {
-      if (prev.length !== 1) {
-        return prev;
-      }
-
-      const [firstMessage] = prev;
-      const isInitialWelcome = firstMessage.role === "bot" && welcomeMessages.includes(firstMessage.text);
-
-      if (!isInitialWelcome || firstMessage.text === t.welcome) {
-        return prev;
-      }
-
-      return [
-        {
-          ...firstMessage,
-          text: t.welcome,
-          isArabic: language === "ar"
-        }
-      ];
-    });
-  }, [language, t.welcome]);
+  }, [newChatTrigger, authUser?.uid]);
 
   const autoResize = () => {
     const el = textareaRef.current;
@@ -1558,7 +1871,14 @@ export default function AIAssistant({
   const handleSend = async (messageText = null, isReport = false) => {
     const textToSend = messageText !== null ? messageText : input;
     if (!textToSend.trim()) return;
+    if (!authUser?.uid) return;
     const requestLanguage = isArabic(textToSend) ? "ar" : "en";
+    setIsSessionsCollapsed(true);
+
+    const resolvedChatId = activeChatId || await createChatSessionDocument();
+    if (!resolvedChatId) {
+      return;
+    }
 
     const userMessage = {
       id: Date.now(),
@@ -1582,6 +1902,10 @@ export default function AIAssistant({
     setLoading(true);
 
     try {
+      const activeSession = chatSessions.find((session) => session.id === resolvedChatId);
+      const shouldUseMessageAsTitle = !activeSession || !activeSession.title || activeSession.title === t.untitledChat;
+      await saveMessageToChat(resolvedChatId, userMessage, { useMessageAsTitle: shouldUseMessageAsTitle });
+
       const result = await cohereChat({
         message: textToSend,
         preamble: SYSTEM_PREAMBLE,
@@ -1597,6 +1921,7 @@ export default function AIAssistant({
         isReport
       };
       setMessages(prev => [...prev, botMsg]);
+      await saveMessageToChat(resolvedChatId, botMsg);
       setTypingMessageId(botMsgId);
       setTypedText("");
 
@@ -1635,6 +1960,14 @@ export default function AIAssistant({
   const handleSendHidden = async (prompt) => {
     // Don't show user message, just show loading state
     const requestLanguage = detectPromptLanguage(prompt);
+    if (!authUser?.uid) return;
+    setIsSessionsCollapsed(true);
+
+    const resolvedChatId = activeChatId || await createChatSessionDocument();
+    if (!resolvedChatId) {
+      return;
+    }
+
     setActiveRequestLanguage(requestLanguage);
     setLoading(true);
     setIsReportLoading(true);
@@ -1673,10 +2006,16 @@ export default function AIAssistant({
         text: combinedText,
         isReport: true
       }]);
+      const reportLanguage = isArabic(combinedText) ? "ar" : "en";
+      await saveMessageToChat(resolvedChatId, {
+        role: "bot",
+        text: combinedText,
+        isReport: true,
+        isArabic: reportLanguage === "ar"
+      });
       setTypingMessageId(hiddenBotMsgId);
       setTypedText("");
 
-      const reportLanguage = isArabic(combinedText) ? "ar" : "en";
       const reportText = text[reportLanguage] || text.en;
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
@@ -1715,7 +2054,115 @@ export default function AIAssistant({
   const searchHighlightCounter = { value: 0 };
 
   return (
-    <div className="chat-container" dir={language === "ar" ? "rtl" : "ltr"}>
+    <div
+      className={`chat-container ${isSessionsCollapsed ? "sessions-collapsed" : ""}`}
+      dir={language === "ar" ? "rtl" : "ltr"}
+    >
+      {isSessionsCollapsed && (
+        <button
+          type="button"
+          className="chat-floating-toggle"
+          onClick={() => setIsSessionsCollapsed(false)}
+          title={t.expandChats}
+        >
+          <img
+            src={expandSidebarIcon}
+            alt="sidebar toggle"
+            className="chat-floating-toggle-icon"
+          />
+        </button>
+      )}
+
+      {!isSessionsCollapsed && (
+      <aside className="chat-sessions-panel" ref={sessionsPanelRef}>
+        <div className="chat-sessions-header">
+          <h4>{t.chats}</h4>
+          <div className="chat-sessions-actions">
+            <button
+              type="button"
+              className="chat-sessions-toggle-btn"
+              onClick={() => setIsSessionsCollapsed((prev) => !prev)}
+              title={isSessionsCollapsed ? t.expandChats : t.collapseChats}
+            >
+              <img
+                src={isSessionsCollapsed ? expandSidebarIcon : collapseSidebarIcon}
+                alt="sidebar toggle"
+                className="chat-sessions-toggle-icon"
+              />
+            </button>
+            <button
+              type="button"
+              className="chat-sessions-new-btn"
+              onClick={startNewChatDraft}
+              title={t.newChatSidebar}
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <div className="chat-sessions-list">
+          {isChatSessionsLoading && <p className="chat-sessions-empty">{t.loadingChats}</p>}
+          {!isChatSessionsLoading && !!chatSessionsError && (
+            <p className="chat-sessions-empty">{t.chatsLoadError}</p>
+          )}
+          {!isChatSessionsLoading && chatSessions.length === 0 && (
+            <p className="chat-sessions-empty">{t.noChats}</p>
+          )}
+          {chatSessions.map((session) => (
+            <div
+              key={session.id}
+              className={`chat-session-item ${session.id === activeChatId ? "active" : ""}`}
+              title={session.title || t.untitledChat}
+            >
+              <button
+                type="button"
+                className="chat-session-main-btn"
+                onClick={() => {
+                  setActiveChatId(session.id);
+                  setInput("");
+                  setOpenSessionMenuId("");
+                }}
+              >
+                <span className="chat-session-title">{session.title || t.untitledChat}</span>
+              </button>
+
+              <div className="chat-session-menu-wrap">
+                <button
+                  type="button"
+                  className="chat-session-menu-btn"
+                  title={t.menuLabel}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenSessionMenuId((prev) => (prev === session.id ? "" : session.id));
+                  }}
+                >
+                  ...
+                </button>
+
+                {openSessionMenuId === session.id && (
+                  <div className="chat-session-menu" role="menu">
+                    <button
+                      type="button"
+                      className="chat-session-menu-delete"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        setOpenSessionMenuId("");
+                        setPendingDeleteChatId(session.id);
+                      }}
+                    >
+                      {t.deleteChat}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </aside>
+      )}
+
+      <div className="chat-main-pane">
 
       <div className="chat-messages" ref={messagesContainerRef}>
 
@@ -1791,7 +2238,7 @@ export default function AIAssistant({
           </div>
         )}
 
-        {loading && (() => {
+        {loading && !typingMessageId && (() => {
           const lastUserMessage = messages.filter(m => m.role === "user").pop();
           const inferredLoadingLanguage = activeRequestLanguage || (
             !isReportLoading && lastUserMessage && lastUserMessage.text && isArabic(lastUserMessage.text)
@@ -1830,6 +2277,7 @@ export default function AIAssistant({
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
+              setIsSessionsCollapsed(true);
               autoResize();
             }}
             onKeyDown={handleKeyDown}
@@ -1851,6 +2299,39 @@ export default function AIAssistant({
           {t.disclaimer}
         </div>
       </div>
+
+      </div>
+
+      {pendingDeleteChatId && (
+        <div className="chat-delete-modal-overlay" onClick={() => setPendingDeleteChatId("") }>
+          <div
+            className="chat-delete-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="chat-delete-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="chat-delete-modal-title">{t.deleteChatTitle}</h3>
+            <p>{t.deleteChatConfirm}</p>
+            <div className="chat-delete-modal-actions">
+              <button
+                type="button"
+                className="chat-delete-cancel-btn"
+                onClick={() => setPendingDeleteChatId("")}
+              >
+                {t.cancelDelete}
+              </button>
+              <button
+                type="button"
+                className="chat-delete-confirm-btn"
+                onClick={handleConfirmDeleteChat}
+              >
+                {t.confirmDelete}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

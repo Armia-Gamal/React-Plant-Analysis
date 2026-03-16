@@ -1122,6 +1122,7 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
     : (camImage || (current && current.image) || cropImage || classImg);
   const prevArrow = language === "ar" ? "▶" : "◀";
   const nextArrow = language === "ar" ? "◀" : "▶";
+  const isClassifyScanActive = classificationStatus === "Processing" && !!cropImage;
 
   return (
     <div className="container">
@@ -1234,7 +1235,7 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
 
           <div className="classification-content">
             
-            <div className="classification-image-box">
+            <div className={`classification-image-box ${isClassifyScanActive ? "scan-active" : ""}`}>
               <img
                 src={displayImage}
                 alt="Classified"
