@@ -32,7 +32,7 @@ const text = {
     ai: "المساعد الذكي",
     history: "السجل",
     customData: "بيانات مخصصة",
-    pro: "pro",
+    pro: "PRO",
     accountPages: "صفحات الحساب",
     profile: "الملف الشخصي",
     signOut: "تسجيل الخروج"
