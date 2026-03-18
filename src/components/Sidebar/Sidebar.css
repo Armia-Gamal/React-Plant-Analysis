@@ -74,6 +74,17 @@
   transition: 0.3s;
 }
 
+.pro-pill {
+  margin-inline-start: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+}
+
 [dir="rtl"] .menu li,
 [dir="rtl"] .sidebar-footer,
 [dir="rtl"] .section-label {

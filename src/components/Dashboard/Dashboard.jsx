@@ -6,8 +6,11 @@ import PlantAnalysis from "../../pages/dashboard/PlantAnalysis/PlantAnalysis";
 import AIAssistant from "../../pages/dashboard/AIAssistant/AIAssistant";
 import History from "../../pages/dashboard/History/History";
 import Profile from "../../pages/dashboard/Profile/Profile";
+import CustomData from "../../pages/dashboard/CustomData/CustomData";
 import { auth, db } from "../../firebase";
 import { useLanguage } from "../../context/LanguageContext";
+import CustomDataButton from "../Premium/CustomDataButton";
+import PricingModal from "../Premium/PricingModal";
 import languageIcon from "../../assets/images/language-svgrepo-com.svg";
 import defaultAvatar from "../../assets/images/profile-svgrepo-com.svg";
 import "./Dashboard.css";
@@ -18,6 +21,7 @@ const text = {
     plant: "Plant Analysis",
     ai: "AI Assistant",
     history: "History",
+    customData: "Custom Data",
     profile: "Profile",
     upload: "Upload",
     detect: "Detect",
@@ -36,6 +40,7 @@ const text = {
     plant: "تحليل النبات",
     ai: "المساعد الذكي",
     history: "السجل",
+    customData: "بيانات مخصصة",
     profile: "الملف الشخصي",
     upload: "رفع",
     detect: "اكتشاف",
@@ -59,6 +64,8 @@ export default function Dashboard() {
   const searchInputRef = useRef(null);
 
   const [activePage, setActivePage] = useState("plant");
+  const [isSubscribed, setIsSubscribed] = useState(() => localStorage.getItem("nabta_pro_subscription") === "true");
+  const [showPricingModal, setShowPricingModal] = useState(false);
 
   // 0 Upload
   // 1 Detect
@@ -152,6 +159,22 @@ export default function Dashboard() {
     }));
   };
 
+  const handleCustomDataAccess = () => {
+    if (isSubscribed) {
+      setActivePage("custom-data");
+      return;
+    }
+
+    setShowPricingModal(true);
+  };
+
+  const handleUpgradeToPro = () => {
+    setIsSubscribed(true);
+    localStorage.setItem("nabta_pro_subscription", "true");
+    setShowPricingModal(false);
+    setActivePage("custom-data");
+  };
+
   // render all pages but hide the inactive ones; this preserves state such as images
   const renderContent = () => {
     return (
@@ -179,6 +202,9 @@ export default function Dashboard() {
         <div className={activePage === "profile" ? "" : "hidden"}>
           <Profile />
         </div>
+        <div className={activePage === "custom-data" ? "" : "hidden"}>
+          <CustomData />
+        </div>
       </>
     );
   };
@@ -192,7 +218,12 @@ export default function Dashboard() {
   return (
     <div className="dashboard-layout" dir={language === "ar" ? "rtl" : "ltr"}>
 
-      <Sidebar activePage={activePage} setActivePage={setActivePage} />
+      <Sidebar
+        activePage={activePage}
+        setActivePage={setActivePage}
+        isSubscribed={isSubscribed}
+        onCustomDataClick={handleCustomDataAccess}
+      />
 
       <div className="main-content">
 
@@ -206,6 +237,7 @@ export default function Dashboard() {
                 {activePage === "ai" && ` ${t.ai}`}
                 {activePage === "history" && ` ${t.history}`}
                 {activePage === "profile" && ` ${t.profile}`}
+                {activePage === "custom-data" && ` ${t.customData}`}
               </span>
             </span>
           </div>
@@ -267,85 +299,11 @@ export default function Dashboard() {
           {activePage === "ai" && (
             <div className="navbar-center chat-header-navbar">
               <h3>{t.aiTitle}</h3>
-
-              <button type="button" className="new-chat-cta" onClick={handleNewChat} title={t.newChat}>
-                <span className="new-chat-plus">+</span>
-                <span>{t.newChat}</span>
-              </button>
-
             </div>
           )}
 
         <div className="navbar-right">
-          {activePage === "ai" && (
-            <div className="ai-search-wrap" ref={searchBoxRef}>
-              <button
-                type="button"
-                className="nav-icon nav-icon-button"
-                onClick={() => setShowSearchBox((prev) => !prev)}
-                title={t.searchPlaceholder}
-                aria-label={t.searchPlaceholder}
-              >
-                <svg className="search-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M11 4a7 7 0 1 1 0 14a7 7 0 0 1 0-14Zm0-2a9 9 0 1 0 5.65 16l4.17 4.18l1.42-1.42L18.07 16A9 9 0 0 0 11 2Z" />
-                </svg>
-              </button>
-
-              {showSearchBox && (
-                <div className="search-box search-box--dropdown">
-                  <div className="search-input-row">
-                    <input
-                      ref={searchInputRef}
-                      autoFocus
-                      type="text"
-                      placeholder={t.searchPlaceholder}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    {searchQuery && (
-                      <button
-                        type="button"
-                        className="search-clear-btn"
-                        onClick={() => {
-                          setSearchQuery("");
-                          searchInputRef.current?.focus();
-                        }}
-                        aria-label="Clear search"
-                        title="Clear search"
-                      >
-                        x
-                      </button>
-                    )}
-                  </div>
-                  {searchQuery.trim() && searchMatchStats.total > 1 && (
-                    <div className="search-nav-row">
-                      <span className="search-nav-count">
-                        {searchMatchStats.current}/{searchMatchStats.total}
-                      </span>
-                      <button
-                        type="button"
-                        className="search-nav-btn"
-                        onClick={() => handleSearchJump("prev")}
-                        aria-label="Previous result"
-                        title="Previous result"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        className="search-nav-btn"
-                        onClick={() => handleSearchJump("next")}
-                        aria-label="Next result"
-                        title="Next result"
-                      >
-                        ↓
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          {/* ...existing code... */}
           <div className="language-switcher" ref={languageMenuRef}>
             <button
               type="button"
@@ -423,6 +381,13 @@ export default function Dashboard() {
 
         {renderContent()}
       </div>
+
+      <PricingModal
+        isOpen={showPricingModal}
+        language={language}
+        onClose={() => setShowPricingModal(false)}
+        onUpgrade={handleUpgradeToPro}
+      />
     </div>
   );
 }

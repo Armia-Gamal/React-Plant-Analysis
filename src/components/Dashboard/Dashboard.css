@@ -359,6 +359,8 @@ html, body {
   flex-direction: row;
   gap: 12px;
   position: relative;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .chat-header-navbar h3 {
@@ -482,6 +484,20 @@ html, body {
   }
 
   .new-chat-cta span:last-child {
+    display: none;
+  }
+
+  .custom-data-btn span:not(.custom-data-btn-icon):not(.custom-data-chip) {
+    display: none;
+  }
+
+  .custom-data-btn {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .custom-data-chip {
     display: none;
   }
 

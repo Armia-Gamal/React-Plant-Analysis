@@ -28,8 +28,8 @@ import "./AIAssistant.css";
 // Import logo as base64 data URL for PDF generation (works in production)
 import nabtaLogo from "../../../assets/images/New Project (1).png";
 import arabicNabtaLogo from "../../../assets/images/das.png";
-import sidebarOpenImg from "../../../assets/images/sidebar (1).png";
-import sidebarClosedImg from "../../../assets/images/sidebar.png";
+import sidebarLeftIcon from "../../../assets/images/sidebar-left-svgrepo-com (1).svg";
+import sidebarRightIcon from "../../../assets/images/sidebar-right-svgrepo-com.svg";
 
 const parseLocalVfs = (source) => {
   try {
@@ -1114,7 +1114,7 @@ function buildPdfDefinition({
 const text = {
   en: {
     welcome: "Welcome to Nabta AI Assistant! 🌿 I am your personal botanist. How can I help your garden grow today? I can help with plant identification, care tips, or diagnosing diseases.",
-    chats: "Chats",
+    chats: "AI Conversations",
     newChatSidebar: "New chat",
     untitledChat: "New chat",
     noChats: "No chats yet",
@@ -1259,8 +1259,7 @@ export default function AIAssistant({
 
   const isArabic = detectArabic;
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
-  const expandSidebarIcon = language === "ar" ? sidebarClosedImg : sidebarOpenImg;
-  const collapseSidebarIcon = language === "ar" ? sidebarOpenImg : sidebarClosedImg;
+  const languageSidebarIcon = language === "ar" ? sidebarRightIcon : sidebarLeftIcon;
   const visibleMessages = messages.length > 0
     ? messages
     : [
@@ -2066,14 +2065,13 @@ export default function AIAssistant({
           title={t.expandChats}
         >
           <img
-            src={expandSidebarIcon}
+            src={languageSidebarIcon}
             alt="sidebar toggle"
-            className="chat-floating-toggle-icon"
+            className={`chat-floating-toggle-icon ${isSessionsCollapsed ? "is-collapsed" : "is-expanded"}`}
           />
         </button>
       )}
 
-      {!isSessionsCollapsed && (
       <aside className="chat-sessions-panel" ref={sessionsPanelRef}>
         <div className="chat-sessions-header">
           <h4>{t.chats}</h4>
@@ -2085,9 +2083,9 @@ export default function AIAssistant({
               title={isSessionsCollapsed ? t.expandChats : t.collapseChats}
             >
               <img
-                src={isSessionsCollapsed ? expandSidebarIcon : collapseSidebarIcon}
+                src={languageSidebarIcon}
                 alt="sidebar toggle"
-                className="chat-sessions-toggle-icon"
+                className={`chat-sessions-toggle-icon ${isSessionsCollapsed ? "is-collapsed" : "is-expanded"}`}
               />
             </button>
             <button
@@ -2137,7 +2135,11 @@ export default function AIAssistant({
                     setOpenSessionMenuId((prev) => (prev === session.id ? "" : session.id));
                   }}
                 >
-                  ...
+                  <span className="chat-session-menu-icon" aria-hidden="true">
+                    <span className="chat-session-menu-dot" />
+                    <span className="chat-session-menu-dot" />
+                    <span className="chat-session-menu-dot" />
+                  </span>
                 </button>
 
                 {openSessionMenuId === session.id && (
@@ -2160,7 +2162,6 @@ export default function AIAssistant({
           ))}
         </div>
       </aside>
-      )}
 
       <div className="chat-main-pane">
 

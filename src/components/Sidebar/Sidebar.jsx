@@ -8,6 +8,8 @@ import aiIconInactive from "../../assets/images/hubot-svgrepo-com.svg";
 import aiIcon from "../../assets/images/hubot-svgrepo-com (3).svg";
 import historyIconInactive from "../../assets/images/history-svgrepo-com.svg";
 import historyIcon from "../../assets/images/history-svgrepo-com (2).svg";
+import puzzlePiece from "../../assets/images/puzzle-piece-svgrepo-com.svg";
+import puzzlePieceHover from "../../assets/images/puzzle-piece-svgrepo-com.svg";
 import profileIconInactive from "../../assets/images/profile-svgrepo-com.svg";
 import profileIcon from "../../assets/images/profile-svgrepo-com (1).svg";
 import { signOut } from "firebase/auth";
@@ -19,6 +21,8 @@ const text = {
     plant: "Plant Analysis",
     ai: "AI Assistant",
     history: "History",
+    customData: "Custom Data",
+    pro: "PRO",
     accountPages: "ACCOUNT PAGES",
     profile: "Profile",
     signOut: "Sign Out"
@@ -27,17 +31,23 @@ const text = {
     plant: "تحليل النبات",
     ai: "المساعد الذكي",
     history: "السجل",
+    customData: "بيانات مخصصة",
+    pro: "pro",
     accountPages: "صفحات الحساب",
     profile: "الملف الشخصي",
     signOut: "تسجيل الخروج"
   }
 };
 
-export default function Sidebar({ activePage, setActivePage }) {
+
+import { useState } from "react";
+
+export default function Sidebar({ activePage, setActivePage, onCustomDataClick, isSubscribed = false }) {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const t = text[language] || text.en;
   const activeLogo = language === "ar" ? logoArabic : logo;
+  const [customDataHovered, setCustomDataHovered] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -91,6 +101,29 @@ export default function Sidebar({ activePage, setActivePage }) {
               <img src={activePage === "history" ? historyIcon : historyIconInactive} alt="History" />
             </div>
             <span>{t.history}</span>
+          </li>
+
+          <li
+            className={activePage === "custom-data" ? "active-item" : ""}
+            onClick={() => {
+              if (typeof onCustomDataClick === "function") {
+                onCustomDataClick();
+                return;
+              }
+              setActivePage("custom-data");
+            }}
+            onMouseEnter={() => setCustomDataHovered(true)}
+            onMouseLeave={() => setCustomDataHovered(false)}
+          >
+            <div className="menu-icon">
+              <img
+                src={customDataHovered ? puzzlePieceHover : puzzlePiece}
+                alt="Custom Data"
+                style={{ width: 22, height: 22, display: "block" }}
+              />
+            </div>
+            <span>{t.customData}</span>
+            {!isSubscribed ? <span className="pro-pill">{t.pro}</span> : null}
           </li>
         </ul>
 
