@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
 import "./Sidebar.css";
 import logo from "../../assets/images/Logo.svg";
 import logoArabic from "../../assets/images/lllls.png";
@@ -12,7 +14,6 @@ import puzzlePiece from "../../assets/images/puzzle-piece-svgrepo-com.svg";
 import puzzlePieceHover from "../../assets/images/puzzle-piece-svgrepo-com.svg";
 import profileIconInactive from "../../assets/images/profile-svgrepo-com.svg";
 import profileIcon from "../../assets/images/profile-svgrepo-com (1).svg";
-import { signOut } from "firebase/auth";
 import { auth } from "../../firebase";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -28,30 +29,56 @@ const text = {
     signOut: "Sign Out"
   },
   ar: {
-    plant: "تحليل النبات",
-    ai: "المساعد الذكي",
-    history: "السجل",
-    customData: "بيانات مخصصة",
+    plant: "\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0646\u0628\u0627\u062a",
+    ai: "\u0627\u0644\u0645\u0633\u0627\u0639\u062f \u0627\u0644\u0630\u0643\u064a",
+    history: "\u0627\u0644\u0633\u062c\u0644",
+    customData: "\u0628\u064a\u0627\u0646\u0627\u062a \u0645\u062e\u0635\u0635\u0629",
     pro: "PRO",
-    accountPages: "صفحات الحساب",
-    profile: "الملف الشخصي",
-    signOut: "تسجيل الخروج"
+    accountPages: "\u0635\u0641\u062d\u0627\u062a \u0627\u0644\u062d\u0633\u0627\u0628",
+    profile: "\u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062e\u0635\u064a",
+    signOut: "\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c"
   }
 };
 
-
-import { useState } from "react";
-
-export default function Sidebar({ activePage, setActivePage, onCustomDataClick, isSubscribed = false }) {
+export default function Sidebar({
+  activePage,
+  setActivePage,
+  onCustomDataClick,
+  isSubscribed = false,
+  isOpen = false,
+  onClose
+}) {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const t = text[language] || text.en;
   const activeLogo = language === "ar" ? logoArabic : logo;
   const [customDataHovered, setCustomDataHovered] = useState(false);
 
+  const closeSidebar = () => {
+    if (typeof onClose === "function") {
+      onClose();
+    }
+  };
+
+  const handlePageChange = (page) => {
+    setActivePage(page);
+    closeSidebar();
+  };
+
+  const handleCustomDataSelect = () => {
+    if (typeof onCustomDataClick === "function") {
+      onCustomDataClick();
+    } else {
+      setActivePage("custom-data");
+    }
+
+    closeSidebar();
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      closeSidebar();
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
@@ -59,10 +86,21 @@ export default function Sidebar({ activePage, setActivePage, onCustomDataClick, 
   };
 
   return (
-    <aside className="sidebar" dir={language === "ar" ? "rtl" : "ltr"}>
-
+    <aside
+      id="dashboard-sidebar"
+      className={`sidebar ${isOpen ? "sidebar-open" : ""}`}
+      dir={language === "ar" ? "rtl" : "ltr"}
+    >
       <div>
         <div className="sidebar-header">
+          <button
+            type="button"
+            className="sidebar-mobile-close"
+            onClick={closeSidebar}
+            aria-label="Close sidebar"
+          >
+            X
+          </button>
           <img
             src={activeLogo}
             alt="Nabta Logo"
@@ -75,7 +113,7 @@ export default function Sidebar({ activePage, setActivePage, onCustomDataClick, 
         <ul className="menu">
           <li
             className={activePage === "plant" ? "active-item" : ""}
-            onClick={() => setActivePage("plant")}
+            onClick={() => handlePageChange("plant")}
           >
             <div className="menu-icon">
               <img src={activePage === "plant" ? plantIcon : plantIconActive} alt="Plant" />
@@ -85,7 +123,7 @@ export default function Sidebar({ activePage, setActivePage, onCustomDataClick, 
 
           <li
             className={activePage === "ai" ? "active-item" : ""}
-            onClick={() => setActivePage("ai")}
+            onClick={() => handlePageChange("ai")}
           >
             <div className="menu-icon">
               <img src={activePage === "ai" ? aiIcon : aiIconInactive} alt="AI" />
@@ -95,7 +133,7 @@ export default function Sidebar({ activePage, setActivePage, onCustomDataClick, 
 
           <li
             className={activePage === "history" ? "active-item" : ""}
-            onClick={() => setActivePage("history")}
+            onClick={() => handlePageChange("history")}
           >
             <div className="menu-icon">
               <img src={activePage === "history" ? historyIcon : historyIconInactive} alt="History" />
@@ -105,13 +143,7 @@ export default function Sidebar({ activePage, setActivePage, onCustomDataClick, 
 
           <li
             className={activePage === "custom-data" ? "active-item" : ""}
-            onClick={() => {
-              if (typeof onCustomDataClick === "function") {
-                onCustomDataClick();
-                return;
-              }
-              setActivePage("custom-data");
-            }}
+            onClick={handleCustomDataSelect}
             onMouseEnter={() => setCustomDataHovered(true)}
             onMouseLeave={() => setCustomDataHovered(false)}
           >
@@ -134,7 +166,7 @@ export default function Sidebar({ activePage, setActivePage, onCustomDataClick, 
         <ul className="menu">
           <li
             className={activePage === "profile" ? "active-item" : ""}
-            onClick={() => setActivePage("profile")}
+            onClick={() => handlePageChange("profile")}
           >
             <div className="menu-icon">
               <img src={activePage === "profile" ? profileIcon : profileIconInactive} alt="Profile" />
@@ -144,7 +176,6 @@ export default function Sidebar({ activePage, setActivePage, onCustomDataClick, 
         </ul>
       </div>
 
-      {/* ===== Sign Out Bottom ===== */}
       <div className="sidebar-footer" onClick={handleLogout}>
         <svg
           viewBox="0 0 24 24"
@@ -161,7 +192,6 @@ export default function Sidebar({ activePage, setActivePage, onCustomDataClick, 
         </svg>
         <span>{t.signOut}</span>
       </div>
-
     </aside>
   );
 }

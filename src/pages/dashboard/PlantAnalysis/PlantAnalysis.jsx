@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+﻿import { useState, useRef } from "react";
 import { useLanguage } from "../../../context/LanguageContext";
 import bgImage from "../../../assets/images/OIP.jpg";
 import uploadImg from "../../../assets/images/hoolding-leaf-svgrepo-com.svg";
+import mobileUploadImg from "../../../assets/images/photo-camera-svgrepo-com.svg";
 import detectImg from "../../../assets/images/Gemini_Generate.png";
 import classImg from "../../../assets/images/Crop.jpg";
 import segmentImg from "../../../assets/images/opacity-planet.jpg";
@@ -12,6 +13,9 @@ const text = {
     dragDrop: "Drag and drop an image here",
     formats: "Supported formats: JPG, PNG. Max file size 5MB.",
     uploadImage: "Upload Image",
+    mobileScanTitle: "Scan your plant \uD83C\uDF3F",
+    mobileScanSubtitle: "Take a photo or upload from gallery",
+    mobileScanMeta: "JPG, PNG \u2022 Max 5MB",
     done: "Done",
     objectDetection: "Object Detection",
     detectionSubtitle: "Object detection result with cropped plant regions",
@@ -48,6 +52,9 @@ const text = {
     dragDrop: "اسحب الصورة وأفلتها هنا",
     formats: "الصيغ المدعومة: JPG وPNG. الحد الأقصى 5MB.",
     uploadImage: "رفع صورة",
+    mobileScanTitle: "\u0627\u0641\u062d\u0635 \u0646\u0628\u0627\u062a\u0643 \uD83C\uDF3F",
+    mobileScanSubtitle: "\u0627\u0644\u062a\u0642\u0637 \u0635\u0648\u0631\u0629 \u0623\u0648 \u0627\u0631\u0641\u0639 \u0645\u0646 \u0627\u0644\u0645\u0639\u0631\u0636",
+    mobileScanMeta: "JPG, PNG \u2022 \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649 5MB",
     done: "تم",
     objectDetection: "اكتشاف العناصر",
     detectionSubtitle: "نتيجة اكتشاف العناصر مع قص مناطق النبات",
@@ -1130,7 +1137,7 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
         <div className="inner-box">
           <div className="layer-3">
             <div
-                className={`upload-content ${isDragging ? "drag-active" : ""}`}
+                className={`upload-content ${selectedFile ? "has-file" : "is-idle"} ${isDragging ? "drag-active" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -1144,16 +1151,23 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
 
                 {!selectedFile && (
                   <>
-                    <div className="image-upload">
+                    <div className="image-upload image-upload--desktop">
                       <img src={uploadImg} alt="upload" />
                     </div>
-                    <h2>{t.dragDrop}</h2>
-                    <p>{t.formats}</p>
+                    <div className="image-upload image-upload--mobile">
+                      <img src={mobileUploadImg} alt="camera" />
+                    </div>
+                    <h2 className="upload-title upload-title--desktop">{t.dragDrop}</h2>
+                    <h2 className="upload-title upload-title--mobile">{t.mobileScanTitle}</h2>
+                    <p className="upload-copy upload-copy--desktop">{t.formats}</p>
+                    <p className="upload-copy upload-copy--mobile">{t.mobileScanSubtitle}</p>
+                    <p className="upload-copy upload-copy--mobile upload-copy--meta">{t.mobileScanMeta}</p>
                     <button
                       className="upload-btn"
                       onClick={() => fileInputRef.current.click()}
                     >
-                      {t.uploadImage}
+                      <span className="upload-btn-label upload-btn-label--desktop">Upload Image</span>
+                      <span className="upload-btn-label upload-btn-label--mobile">{"Scan Your Plant \uD83C\uDF3F"}</span>
                     </button>
                   </>
                 )}
