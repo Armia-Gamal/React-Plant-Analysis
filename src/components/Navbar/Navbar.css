@@ -147,14 +147,17 @@
   line-height: 1;
 }
 
-@media (min-width: 481px) {
-  .language-flag {
-    display: inline-block;
+@media (max-width: 480px) {
+
+  .language-dropdown .language-flag {
+    display: none !important;
   }
 
-  .language-flag-emoji {
-    display: none;
+  .language-dropdown .language-flag-emoji {
+    display: inline !important;
+    font-size: 18px;
   }
+
 }
 
 .language-option:hover {
