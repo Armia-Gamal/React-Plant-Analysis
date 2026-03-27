@@ -205,7 +205,7 @@
 }
 
 .login-right {
-  margin-top: 20px;
+  margin-top: 30px;
   flex: 1.2;
   display: flex;
   justify-content: center;
@@ -219,4 +219,53 @@
 
 [dir="rtl"] .login-right img {
   margin-right: 0;
+}
+
+/* Mobile styles: center form, image as background, form 50% transparent */
+@media (max-width: 600px) {
+  .login-layout {
+    flex-direction: column;
+    min-height: 100vh;
+    justify-content: center;
+    align-items: center;
+    background: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .login-right {
+    display: none !important;
+  }
+  .login-layout::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+
+    background: url('../../assets/images/Image.png') no-repeat;
+    background-size: cover;
+
+    background-position: 56% center; 
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .login-left {
+    margin-top: 0;
+    width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  .login-card-box {
+    width: 92vw;
+    max-width: 400px;
+    background: rgba(255,255,255,0.5);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    border-radius: 22px;
+    position: relative;
+    z-index: 2;
+    backdrop-filter: blur(6px);
+  }
 }

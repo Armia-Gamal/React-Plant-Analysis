@@ -7,6 +7,7 @@
   padding: 15px 350px;
   display: flex;
   justify-content: space-between;
+  font-family: inherit;
   font-size: 13px;
   color: #94a3b8;
 
@@ -20,4 +21,66 @@
 
 [dir="rtl"] .footer {
   flex-direction: row-reverse;
+}
+/* =========================
+   Mobile Footer Responsive
+========================= */
+@media (max-width: 768px) {
+
+  .footer {
+    padding: 12px 16px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+
+    /* ✨ يخليه بارز */
+    backdrop-filter: blur(6px); /* Glass effect */
+    -webkit-backdrop-filter: blur(6px);
+
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15); /* ظل لفوق */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    z-index: 999; /* يطلع فوق أي حاجة */
+  }
+
+  .footer p {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .footer ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer ul li {
+    font-size: 12px;
+  }
+}
+
+/* =========================
+   Extra Small Devices
+========================= */
+@media (max-width: 480px) {
+
+  .footer {
+    padding: 10px;
+
+    /* تزود البروز أكتر */
+    box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.2);
+  }
+
+  .footer ul {
+    gap: 10px;
+  }
+
+  .footer p {
+    font-size: 11px;
+  }
+
 }
