@@ -13,7 +13,7 @@ const text = {
     dragDrop: "Drag and drop an image here",
     formats: "Supported formats: JPG, PNG. Max file size 5MB.",
     uploadImage: "Upload Image",
-    mobileScanTitle: "Scan your plant \uD83C\uDF3F",
+    mobileScanTitle: "Identify your plant \uD83C\uDF3F",
     mobileScanSubtitle: "Take a photo or upload from gallery",
     mobileScanMeta: "JPG, PNG \u2022 Max 5MB",
     done: "Done",
@@ -52,8 +52,8 @@ const text = {
     dragDrop: "اسحب الصورة وأفلتها هنا",
     formats: "الصيغ المدعومة: JPG وPNG. الحد الأقصى 5MB.",
     uploadImage: "رفع صورة",
-    mobileScanTitle: "\u0627\u0641\u062d\u0635 \u0646\u0628\u0627\u062a\u0643 \uD83C\uDF3F",
-    mobileScanSubtitle: "\u0627\u0644\u062a\u0642\u0637 \u0635\u0648\u0631\u0629 \u0623\u0648 \u0627\u0631\u0641\u0639 \u0645\u0646 \u0627\u0644\u0645\u0639\u0631\u0636",
+    mobileScanTitle: "تعرّف على نباتك 🌿",
+    mobileScanSubtitle: "التقط صورة أو اختر من المعرض",
     mobileScanMeta: "JPG, PNG \u2022 \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649 5MB",
     done: "تم",
     objectDetection: "اكتشاف العناصر",
@@ -1167,7 +1167,9 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                       onClick={() => fileInputRef.current.click()}
                     >
                       <span className="upload-btn-label upload-btn-label--desktop">Upload Image</span>
-                      <span className="upload-btn-label upload-btn-label--mobile">{"Scan Your Plant \uD83C\uDF3F"}</span>
+                      <span className="upload-btn-label upload-btn-label--mobile">
+                        {language === "ar" ? "فحص النبات 🌿" : "Scan Your Plant 🌿"}
+                      </span>
                     </button>
                   </>
                 )}
