@@ -593,7 +593,7 @@
 @media (max-width: 768px) {
     .container {
         width: calc(100% - 20px);
-        margin: 92px auto;
+        margin: 92px 0px 13px 13px ;
         display: flex;
         flex-direction: column;
         gap: 16px;
