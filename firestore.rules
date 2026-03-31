@@ -18,5 +18,12 @@
                             && get(/databases/$(database)/documents/chatAi/$(chatId)).data.ownerId == request.auth.uid;
         }
       }
+
+      match /histroy/{entryId} {
+        allow create: if request.auth != null
+                      && request.resource.data.ownerId == request.auth.uid;
+        allow read, update, delete: if request.auth != null
+                                    && resource.data.ownerId == request.auth.uid;
+      }
     }
   }

@@ -1,5 +1,7 @@
 ﻿import { useState, useRef } from "react";
 import { useLanguage } from "../../../context/LanguageContext";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../../../firebase";
 import bgImage from "../../../assets/images/OIP.jpg";
 import uploadImg from "../../../assets/images/hoolding-leaf-svgrepo-com.svg";
 import mobileUploadImg from "../../../assets/images/photo-camera-svgrepo-com.svg";
@@ -269,6 +271,11 @@ const localizePlantDisease = (plantName, diseaseName, language) => {
   };
 };
 
+const ANALYSIS_HISTORY_COLLECTION = "histroy";
+const HISTORY_FALLBACK_PLANT_NAME = "Not Detected Yet";
+const HISTORY_FALLBACK_DISEASE_NAME = "Not Classified Yet";
+const HISTORY_FALLBACK_SEVERITY = "Not Determined";
+
 export default function PlantAnalysis({ setStep, setProgressValue, onSendReport }) {
   const { language } = useLanguage();
   const t = text[language] || text.en;
@@ -307,6 +314,8 @@ export default function PlantAnalysis({ setStep, setProgressValue, onSendReport 
 
   const apiKey = import.meta.env.VITE_Detect_API_KEY;
   const fileInputRef = useRef();
+  const historySaveSignatureRef = useRef("");
+  const activeAnalysisIdRef = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
 
   const radius = 36;
@@ -778,16 +787,123 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
     setShowReportModal(false);
   };
 
+  const buildHistoryEntries = (analysisEntries = []) => {
+    const sourceEntries = Array.isArray(analysisEntries) && analysisEntries.length > 0
+      ? analysisEntries
+      : [{}];
+
+    return sourceEntries.map((entry, index) => {
+      const rawPlantName = entry?.disease && entry.disease !== "Awaiting Detection"
+        ? String(entry.disease).trim()
+        : HISTORY_FALLBACK_PLANT_NAME;
+      const rawDiseaseName = entry?.category
+        ? String(entry.category).trim()
+        : HISTORY_FALLBACK_DISEASE_NAME;
+      const rawSeverity = entry?.severity
+        ? String(entry.severity).trim()
+        : HISTORY_FALLBACK_SEVERITY;
+      const confidence = Number.parseFloat(entry?.confidence ?? 0);
+      const diseasePercentage = Number.parseFloat(entry?.diseasePercentage ?? 0);
+      const arabicNames = localizePlantDisease(rawPlantName, rawDiseaseName, "ar");
+      const hasDisease =
+        Number.isFinite(diseasePercentage) &&
+        diseasePercentage > 0 &&
+        rawSeverity !== "Healthy" &&
+        rawSeverity !== "Not Severity Yet";
+
+      return {
+        leafId: index + 1,
+        plantName: rawPlantName,
+        diseaseName: rawDiseaseName,
+        diseasePercentage: Number.isFinite(diseasePercentage) ? Number(diseasePercentage.toFixed(2)) : 0,
+        confidence: Number.isFinite(confidence) ? Number(confidence.toFixed(2)) : 0,
+        severity: rawSeverity,
+        localizedPlantNameAr: rawPlantName === HISTORY_FALLBACK_PLANT_NAME ? text.ar.notDetectedYet : arabicNames.plantName,
+        localizedDiseaseNameAr: rawDiseaseName === HISTORY_FALLBACK_DISEASE_NAME ? text.ar.notClassifiedYet : arabicNames.diseaseName,
+        localizedSeverityAr: (severityText.ar && severityText.ar[rawSeverity]) || rawSeverity,
+        hasDisease
+      };
+    });
+  };
+
+  const saveAnalysisToHistory = async (analysisEntries = [], options = {}) => {
+    const authUser = auth.currentUser;
+    if (!authUser?.uid) {
+      return;
+    }
+
+    const normalizedEntries = buildHistoryEntries(analysisEntries);
+    const signature = JSON.stringify({
+      fileName: options.fileName || "",
+      totalLeavesDetected: options.totalLeavesDetected ?? normalizedEntries.length,
+      entries: normalizedEntries.map((entry) => ({
+        plantName: entry.plantName,
+        diseaseName: entry.diseaseName,
+        diseasePercentage: entry.diseasePercentage,
+        severity: entry.severity
+      }))
+    });
+
+    if (historySaveSignatureRef.current === signature) {
+      return;
+    }
+
+    historySaveSignatureRef.current = signature;
+
+    const now = new Date();
+    const primaryEntry = normalizedEntries[0];
+    const ownerAccount = authUser.email || authUser.displayName || authUser.uid;
+
+    try {
+      await addDoc(collection(db, ANALYSIS_HISTORY_COLLECTION), {
+        ownerId: authUser.uid,
+        ownerEmail: authUser.email || "",
+        ownerDisplayName: authUser.displayName || "",
+        ownerAccount,
+        fileName: options.fileName || "",
+        totalLeavesDetected: options.totalLeavesDetected ?? normalizedEntries.length,
+        hasDetectedDisease: normalizedEntries.some((entry) => entry.hasDisease),
+        primaryPlantName: primaryEntry?.plantName || HISTORY_FALLBACK_PLANT_NAME,
+        primaryDiseaseName: primaryEntry?.diseaseName || HISTORY_FALLBACK_DISEASE_NAME,
+        primaryDiseasePercentage: primaryEntry?.diseasePercentage || 0,
+        primaryLocalizedPlantNameAr: primaryEntry?.localizedPlantNameAr || text.ar.notDetectedYet,
+        primaryLocalizedDiseaseNameAr: primaryEntry?.localizedDiseaseNameAr || text.ar.notClassifiedYet,
+        entries: normalizedEntries,
+        analyzedAt: serverTimestamp(),
+        analyzedAtIso: now.toISOString(),
+        analyzedAtMs: now.getTime(),
+        analysisDayName: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(now),
+        analysisDate: new Intl.DateTimeFormat("en-CA", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).format(now),
+        analysisTime: new Intl.DateTimeFormat("en-US", {
+          hour: "numeric",
+          minute: "2-digit"
+        }).format(now)
+      });
+    } catch (error) {
+      historySaveSignatureRef.current = "";
+      console.error("Failed to save plant analysis history:", error);
+    }
+  };
+
   const handleFile = (file) => {
     if (!file) return;
+    const nextAnalysisId = activeAnalysisIdRef.current + 1;
+    activeAnalysisIdRef.current = nextAnalysisId;
+    historySaveSignatureRef.current = "";
     const url = URL.createObjectURL(file);
     setSelectedFile(file);
     setPreviewUrl(url);
     setStep(0);
-    uploadAndDetect(file);
+    uploadAndDetect(file, nextAnalysisId);
   };
 
   const handleCancel = () => {
+    activeAnalysisIdRef.current += 1;
+    historySaveSignatureRef.current = "";
     setSelectedFile(null);
     setPreviewUrl(null);
     setFinalImage(null);
@@ -826,7 +942,8 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
     }
   };
 
-  const uploadAndDetect = (file) => {
+  const uploadAndDetect = (file, analysisId) => {
+    historySaveSignatureRef.current = "";
 
     setStatus("Uploading");
     setSegStatus("Waiting");
@@ -850,6 +967,10 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
       }
     };
     xhr.onload = async () => {
+      if (activeAnalysisIdRef.current !== analysisId) {
+        return;
+      }
+
       if (xhr.status === 200) {
 
         setStatus("Processing");
@@ -862,6 +983,9 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
         img.src = URL.createObjectURL(file);
 
         img.onload = async () => {
+          if (activeAnalysisIdRef.current !== analysisId) {
+            return;
+          }
 
           const canvas = document.createElement("canvas");
           canvas.width = img.naturalWidth;
@@ -961,6 +1085,10 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
             console.warn("Segmentation error", e);
           }
 
+          if (activeAnalysisIdRef.current !== analysisId) {
+            return;
+          }
+
           setStatus("Completed");
           setProgress(100);
           setStep(2);
@@ -968,7 +1096,7 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
           // classification + CAM + segmentation for every crop box
           if (res.boxes && res.boxes.length > 0) {
             try {
-              await runClassification(file, res.boxes);
+              await runClassification(file, res.boxes, analysisId);
             } catch (e) {
               console.warn("Classification error", e);
             }
@@ -978,6 +1106,10 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
             setClassificationStatus("Completed");
             // still advance to finished classification even when no boxes
             setStep(4);
+            void saveAnalysisToHistory([], {
+              fileName: file?.name || "",
+              totalLeavesDetected: 0
+            });
           }
         };
       }
@@ -986,7 +1118,11 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
     xhr.send(formData);
   };
 
-  const runClassification = async (file, boxes) => {
+  const runClassification = async (file, boxes, analysisId) => {
+    if (activeAnalysisIdRef.current !== analysisId) {
+      return;
+    }
+
     // mark classification active in progress bar
     setStep(3);
     // update status so UI knows we're working on the crops
@@ -1083,6 +1219,10 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
       };
     }));
 
+    if (activeAnalysisIdRef.current !== analysisId) {
+      return;
+    }
+
     setClassifications(results);
     setCurrentIndex(0);
     // set initial display values from first result
@@ -1096,6 +1236,10 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
     setClassificationStatus("Completed");
     // classification finished — mark progress bar done
     setStep(4);
+    void saveAnalysisToHistory(results, {
+      fileName: file?.name || "",
+      totalLeavesDetected: boxes.length
+    });
   };
 
   const handleChangeIndex = (newIndex) => {
