@@ -1,3 +1,22 @@
+/* RTL support for mobile progress bar */
+[dir="rtl"] .navbar-mobile-progress {
+  flex-direction: row-reverse;
+}
+[dir="rtl"] .navbar-mobile-progress-track {
+  direction: rtl;
+  text-align: right;
+}
+[dir="rtl"] .mobile-progress-step {
+  align-items: center;
+}
+[dir="rtl"] .mobile-progress-label {
+  text-align: right;
+}
+[dir="rtl"] .mobile-progress-line {
+  left: auto;
+  right: calc(50% + 14px);
+  background: #E5E7EB;
+}
 /* Language Switcher Buttons */
 .dashboard-language-switcher {
   display: flex;
@@ -535,35 +554,10 @@ body.sidebar-mobile-open {
   font-weight: 600;
 }
 
-.mobile-profile-menu__label svg,
-.mobile-profile-menu__icon-image {
+.mobile-profile-menu__label svg {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-}
-
-.mobile-profile-menu__segment {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.mobile-profile-menu__segment button {
-  min-width: 44px;
-  height: 34px;
-  border: 1px solid #D1D5DB;
-  border-radius: 999px;
-  background: #FFFFFF;
-  color: #374151;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.mobile-profile-menu__segment button.is-active {
-  background: #14B8A6;
-  border-color: #14B8A6;
-  color: #FFFFFF;
 }
 
 .mobile-profile-menu__state {
@@ -618,12 +612,6 @@ body.sidebar-mobile-open {
   border-bottom-color: #334155;
 }
 
-.dashboard-layout--theme-dark .mobile-profile-menu__segment button {
-  background: #0F172A;
-  border-color: #334155;
-  color: #E2E8F0;
-}
-
 .dashboard-layout--theme-dark .mobile-profile-menu__action:hover {
   background: #1E293B;
 }
@@ -640,6 +628,13 @@ body.sidebar-mobile-open {
 
 .language-switcher {
   position: relative;
+}
+
+.language-switcher .nav-icon-button,
+.language-dropdown,
+.language-option {
+  transition: none;
+  animation: none;
 }
 
 .language-icon {
@@ -681,22 +676,11 @@ body.sidebar-mobile-open {
   display: inline-block;
   border-radius: 2px;
   box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+  flex-shrink: 0;
 }
 
 .language-flag-emoji {
-  display: inline;
-  font-size: 16px;
-  line-height: 1;
-}
-
-@media (min-width: 481px) {
-  .language-flag {
-    display: inline-block;
-  }
-
-  .language-flag-emoji {
-    display: none;
-  }
+  display: none;
 }
 
 .language-option:hover {
@@ -899,6 +883,23 @@ body.sidebar-mobile-open {
   .navbar-right .language-switcher .nav-icon {
     width: 40px;
     height: 40px;
+  }
+
+  .language-dropdown {
+    min-width: 156px;
+  }
+
+  .language-option {
+    padding: 11px 14px;
+  }
+
+  .language-option-content {
+    gap: 10px;
+  }
+
+  .language-flag {
+    width: 18px;
+    height: 13px;
   }
 
   .topbar-avatar {

@@ -602,35 +602,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="mobile-profile-menu__row">
-                <span className="mobile-profile-menu__label">
-                  <img src={languageIcon} alt="" className="mobile-profile-menu__icon-image" />
-                  <span>{t.languageLabel || "Language"}</span>
-                </span>
-                <div className="mobile-profile-menu__segment">
-                  <button
-                    type="button"
-                    className={language === "en" ? "is-active" : ""}
-                    onClick={() => {
-                      changeLanguage("en");
-                      setShowProfileMenu(false);
-                    }}
-                  >
-                    EN
-                  </button>
-                  <button
-                    type="button"
-                    className={language === "ar" ? "is-active" : ""}
-                    onClick={() => {
-                      changeLanguage("ar");
-                      setShowProfileMenu(false);
-                    }}
-                  >
-                    AR
-                  </button>
-                </div>
-              </div>
-
               <button
                 type="button"
                 className={`mobile-profile-menu__row mobile-profile-menu__action ${notificationsEnabled ? "is-active" : ""}`}

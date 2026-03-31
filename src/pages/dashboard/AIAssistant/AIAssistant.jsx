@@ -1197,6 +1197,8 @@ function getSessionTimeValue(session) {
   return Number.isNaN(time) ? 0 : time;
 }
 
+const MOBILE_SESSIONS_MEDIA_QUERY = "(max-width: 1023px)";
+
 export default function AIAssistant({
   pendingReport,
   onReportProcessed,
@@ -1237,6 +1239,14 @@ export default function AIAssistant({
   const [isChatSessionsLoading, setIsChatSessionsLoading] = useState(true);
   const [chatSessionsError, setChatSessionsError] = useState("");
   const [isSessionsCollapsed, setIsSessionsCollapsed] = useState(false);
+  const [isMobileSessionsViewport, setIsMobileSessionsViewport] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.matchMedia(MOBILE_SESSIONS_MEDIA_QUERY).matches;
+  });
+  const [isMobileSessionsOpen, setIsMobileSessionsOpen] = useState(false);
   const [openSessionMenuId, setOpenSessionMenuId] = useState("");
   const [pendingDeleteChatId, setPendingDeleteChatId] = useState("");
   const creatingChatRef = useRef(false);
@@ -1260,6 +1270,7 @@ export default function AIAssistant({
   const isArabic = detectArabic;
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const languageSidebarIcon = language === "ar" ? sidebarRightIcon : sidebarLeftIcon;
+  const isSessionsPanelCollapsed = isMobileSessionsViewport ? !isMobileSessionsOpen : isSessionsCollapsed;
   const visibleMessages = messages.length > 0
     ? messages
     : [
@@ -1289,6 +1300,39 @@ export default function AIAssistant({
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const openSessionsPanel = () => {
+    setOpenSessionMenuId("");
+
+    if (isMobileSessionsViewport) {
+      setIsMobileSessionsOpen(true);
+      return;
+    }
+
+    setIsSessionsCollapsed(false);
+  };
+
+  const closeSessionsPanel = () => {
+    setOpenSessionMenuId("");
+
+    if (isMobileSessionsViewport) {
+      setIsMobileSessionsOpen(false);
+      return;
+    }
+
+    setIsSessionsCollapsed(true);
+  };
+
+  const toggleSessionsPanel = () => {
+    setOpenSessionMenuId("");
+
+    if (isMobileSessionsViewport) {
+      setIsMobileSessionsOpen((prev) => !prev);
+      return;
+    }
+
+    setIsSessionsCollapsed((prev) => !prev);
   };
 
   const generateChatTitleFromMessage = async (messageText) => {
@@ -1398,6 +1442,20 @@ export default function AIAssistant({
     setMessages([]);
     setInput("");
     setOpenSessionMenuId("");
+
+    if (isMobileSessionsViewport) {
+      setIsMobileSessionsOpen(false);
+    }
+  };
+
+  const handleSelectChatSession = (chatId) => {
+    setActiveChatId(chatId);
+    setInput("");
+    setOpenSessionMenuId("");
+
+    if (isMobileSessionsViewport) {
+      setIsMobileSessionsOpen(false);
+    }
   };
 
   const handleConfirmDeleteChat = async () => {
@@ -1584,10 +1642,62 @@ export default function AIAssistant({
   }, []);
 
   useEffect(() => {
-    if (isSessionsCollapsed) {
+    if (isSessionsPanelCollapsed) {
       setOpenSessionMenuId("");
     }
-  }, [isSessionsCollapsed]);
+  }, [isSessionsPanelCollapsed]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia(MOBILE_SESSIONS_MEDIA_QUERY);
+    const handleViewportChange = (event) => {
+      setIsMobileSessionsViewport(event.matches);
+      setOpenSessionMenuId("");
+
+      if (event.matches) {
+        setIsMobileSessionsOpen(false);
+      }
+    };
+
+    handleViewportChange(mediaQuery);
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleViewportChange);
+      return () => mediaQuery.removeEventListener("change", handleViewportChange);
+    }
+
+    mediaQuery.addListener(handleViewportChange);
+    return () => mediaQuery.removeListener(handleViewportChange);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+
+    const shouldLockBody = isMobileSessionsViewport && isMobileSessionsOpen;
+    document.body.classList.toggle("chat-sessions-mobile-open", shouldLockBody);
+
+    if (!shouldLockBody) {
+      return () => document.body.classList.remove("chat-sessions-mobile-open");
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsMobileSessionsOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.classList.remove("chat-sessions-mobile-open");
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobileSessionsOpen, isMobileSessionsViewport]);
 
   useEffect(() => {
     if (!authUser?.uid) {
@@ -1872,7 +1982,7 @@ export default function AIAssistant({
     if (!textToSend.trim()) return;
     if (!authUser?.uid) return;
     const requestLanguage = isArabic(textToSend) ? "ar" : "en";
-    setIsSessionsCollapsed(true);
+    closeSessionsPanel();
 
     const resolvedChatId = activeChatId || await createChatSessionDocument();
     if (!resolvedChatId) {
@@ -1960,7 +2070,7 @@ export default function AIAssistant({
     // Don't show user message, just show loading state
     const requestLanguage = detectPromptLanguage(prompt);
     if (!authUser?.uid) return;
-    setIsSessionsCollapsed(true);
+    closeSessionsPanel();
 
     const resolvedChatId = activeChatId || await createChatSessionDocument();
     if (!resolvedChatId) {
@@ -2054,38 +2164,71 @@ export default function AIAssistant({
 
   return (
     <div
-      className={`chat-container ${isSessionsCollapsed ? "sessions-collapsed" : ""}`}
+      className={`chat-container ${isSessionsPanelCollapsed ? "sessions-collapsed" : ""} ${isMobileSessionsViewport && !isSessionsPanelCollapsed ? "mobile-sessions-open" : ""}`}
       dir={language === "ar" ? "rtl" : "ltr"}
     >
-      {isSessionsCollapsed && (
+      {!isMobileSessionsViewport && isSessionsPanelCollapsed && (
         <button
           type="button"
           className="chat-floating-toggle"
-          onClick={() => setIsSessionsCollapsed(false)}
+          onClick={openSessionsPanel}
           title={t.expandChats}
+          aria-label={t.expandChats}
+          aria-controls="chat-sessions-panel"
+          aria-expanded={!isSessionsPanelCollapsed}
         >
           <img
             src={languageSidebarIcon}
             alt="sidebar toggle"
-            className={`chat-floating-toggle-icon ${isSessionsCollapsed ? "is-collapsed" : "is-expanded"}`}
+            className={`chat-floating-toggle-icon ${isSessionsPanelCollapsed ? "is-collapsed" : "is-expanded"}`}
           />
         </button>
       )}
 
-      <aside className="chat-sessions-panel" ref={sessionsPanelRef}>
+      {isMobileSessionsViewport && isSessionsPanelCollapsed && (
+        <button
+          type="button"
+          className="chat-mobile-sessions-trigger"
+          onClick={openSessionsPanel}
+          aria-label={t.expandChats}
+          aria-controls="chat-sessions-panel"
+          aria-expanded={!isSessionsPanelCollapsed}
+        >
+          <img
+            src={languageSidebarIcon}
+            alt=""
+            aria-hidden="true"
+            className={`chat-mobile-sessions-trigger-icon ${isSessionsPanelCollapsed ? "is-collapsed" : "is-expanded"}`}
+          />
+        </button>
+      )}
+
+      {isMobileSessionsViewport && !isSessionsPanelCollapsed && (
+        <button
+          type="button"
+          className="chat-sessions-mobile-backdrop"
+          aria-label={t.collapseChats}
+          onClick={closeSessionsPanel}
+        />
+      )}
+
+      <aside className="chat-sessions-panel" ref={sessionsPanelRef} id="chat-sessions-panel">
         <div className="chat-sessions-header">
           <h4>{t.chats}</h4>
           <div className="chat-sessions-actions">
             <button
               type="button"
               className="chat-sessions-toggle-btn"
-              onClick={() => setIsSessionsCollapsed((prev) => !prev)}
-              title={isSessionsCollapsed ? t.expandChats : t.collapseChats}
+              onClick={toggleSessionsPanel}
+              title={isSessionsPanelCollapsed ? t.expandChats : t.collapseChats}
+              aria-label={isSessionsPanelCollapsed ? t.expandChats : t.collapseChats}
+              aria-controls="chat-sessions-panel"
+              aria-expanded={!isSessionsPanelCollapsed}
             >
               <img
                 src={languageSidebarIcon}
                 alt="sidebar toggle"
-                className={`chat-sessions-toggle-icon ${isSessionsCollapsed ? "is-collapsed" : "is-expanded"}`}
+                className={`chat-sessions-toggle-icon ${isSessionsPanelCollapsed ? "is-collapsed" : "is-expanded"}`}
               />
             </button>
             <button
@@ -2116,11 +2259,7 @@ export default function AIAssistant({
               <button
                 type="button"
                 className="chat-session-main-btn"
-                onClick={() => {
-                  setActiveChatId(session.id);
-                  setInput("");
-                  setOpenSessionMenuId("");
-                }}
+                onClick={() => handleSelectChatSession(session.id)}
               >
                 <span className="chat-session-title">{session.title || t.untitledChat}</span>
               </button>
@@ -2278,7 +2417,7 @@ export default function AIAssistant({
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
-              setIsSessionsCollapsed(true);
+              closeSessionsPanel();
               autoResize();
             }}
             onKeyDown={handleKeyDown}
