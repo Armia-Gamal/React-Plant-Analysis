@@ -249,4 +249,10 @@
   .pricing-plan-grid {
     grid-template-columns: 1fr;
   }
+    .plan-card {
+    min-height: 0 !important;
+    padding: 8px;
+    gap : 7px;
+    
+  }
 }

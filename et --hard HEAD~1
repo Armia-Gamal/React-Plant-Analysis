@@ -1,0 +1,71 @@
+[33m6c38ac1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Update README.md
+[33m1c3fa81[m feat(assets): add vfs_fonts for PDF generation support
+[33m34fc83d[m chore: update public assets and replace model
+[33m9ca7b50[m feat(assets): add vfs_fonts for PDF generation support
+[33m10113e2[m delete
+[33m37941d8[m chore: remove deleted folder
+[33mc2407b4[m feat(assets): add Cairo font family (Regular, Bold)
+[33m676f10d[m Merge branch 'main' of https://github.com/Armia-Gamal/React-Plant-Analysis
+[33m855acf7[m chore: remove deleted folder
+[33m4c92887[m feat(assets): add Cairo font family (Regular, Bold)
+[33me14c644[m add ProtectedRoute component
+[33mab3e320[m add ProtectedRoute Component
+[33m77b1fc2[m delete
+[33m38505f7[m chore(project): setup project config and initial structure
+[33mdaf22a1[m delete some files
+[33m94d3304[m feat: add Firebase functions (email service, HF ping, cohere chat proxy)
+[33m0014018[m delete بعى folder
+[33mca31f2e[m delete public folder
+[33mb09d7e0[m delete public folder
+[33m7c7622a[m chore: update public assets and replace model
+[33m1a8ef2f[m delete public folder
+[33mfbf1661[m improve mobile UI, update scan button text, fix upload box layout and navbar UX
+[33m6986908[m feat: improve mobile dashboard UX and fix plant analysis UI
+[33mcddfb59[m feat: improve mobile dashboard UX and fix plant analysis UI
+[33m0bc0e31[m Fix mobile menu layout and language section
+[33mfc362d4[m edit lang mobile css & Sign up form
+[33m3f16538[m edit footer mobile css
+[33madfa32d[m add mobile css login & NAV & Footer & Signup
+[33me46ca62[m replace model
+[33m9559447[m optimize glb
+[33ma0bcc9e[m track glb with lfs
+[33mc20fab0[m add 3d model
+[33m8c5142c[m first commit
+[33mde0dfdb[m first commit
+[33ma83a17a[m Create SECURITY.md
+[33m9ee97f3[m first commit
+[33me493308[m first commit
+[33me029f1c[m first commit
+[33me965cf8[m first commit
+[33m53f4d6d[m first commit
+[33m50e8dd5[m first commit
+[33m57fd5b6[m first commit
+[33mebaf26a[m first commit
+[33m4f38838[m dd
+[33m447c6b6[m dd
+[33m6bcabf5[m dd
+[33m93deb52[m dd
+[33me21d2a7[m dd
+[33m3c92e6c[m dd
+[33m43bc9e0[m dd
+[33mc030487[m dd
+[33md9d7569[m dd
+[33m2d1e123[m dd
+[33mba33a33[m dd
+[33medda4a2[m s
+[33m6891a9c[m dd
+[33mea2984f[m dd
+[33m137a863[m dd
+[33ma8c5eac[m dd
+[33m4b42f5c[m dd
+[33m8f2f28e[m dd
+[33mdad8050[m dd
+[33m1117cc2[m dd
+[33mf37a76c[m dd
+[33mc6cf80c[m s
+[33me52443b[m fix netlify redirect location
+[33mba9dca6[m add netlify redirect
+[33m9e04bf3[m add full project files
+[33m9498814[m add full project files
+[33m3c16452[m first commit
+[33m047c398[m first commit
