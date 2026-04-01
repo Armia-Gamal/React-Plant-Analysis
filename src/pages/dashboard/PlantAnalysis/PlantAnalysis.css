@@ -1,5 +1,3 @@
-
-
 .container {
     width: 97%;
     margin: 80px auto;
@@ -22,7 +20,6 @@
     justify-content: center;
 }
 
-/* الكارد الداخلي */
 .inner-box {
     width: 100%;
     height: 227px;
@@ -51,18 +48,24 @@
     padding: 30px;
 }
 
-/* صورة الشمال */
+/* ─────────────────────────────────────────────
+   iOS FIX 4: image-box needs explicit min-height
+   so flexbox children don't collapse to zero on iOS.
+   overflow:hidden is kept for the scan animation.
+───────────────────────────────────────────── */
 .image-box {
     margin-left: -24px;
     width: 180px;
     height: 180px;
+    min-height: 100px; /* iOS fix: prevent flex collapse */
     background-color: #FFFFFF;
     border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    overflow: hidden; /* 🔥 مهم */
+    overflow: hidden;
+    -webkit-transform: translateZ(0); /* iOS GPU compositing fix */
 }
 
 .image-box.scan-active::before,
@@ -78,6 +81,7 @@
         rgba(34, 197, 94, 0.18) 55%,
         rgba(34, 197, 94, 0) 100%
     );
+    -webkit-transform: translateY(-100%);
     transform: translateY(-100%);
     animation: imageScanSweep 1.8s ease-in-out infinite alternate;
     pointer-events: none;
@@ -93,6 +97,7 @@
     height: 2px;
     background: #22C55E;
     box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
+    -webkit-transform: translateY(0);
     transform: translateY(0);
     animation: imageScanLine 1.8s ease-in-out infinite alternate;
     pointer-events: none;
@@ -100,28 +105,51 @@
 }
 
 @keyframes imageScanSweep {
-    0% {
-        transform: translateY(-100%);
-    }
-    100% {
-        transform: translateY(100%);
-    }
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
 }
 
 @keyframes imageScanLine {
-    0% {
-        top: 0;
-    }
-    100% {
-        top: calc(100% - 2px);
-    }
+    0% { top: 0; }
+    100% { top: calc(100% - 2px); }
 }
 
-.image-box img {
+/* ─────────────────────────────────────────────
+   iOS FIX 4: Global rule for all result images.
+   - display:block removes the inline baseline gap
+     that causes 4px phantom space under images.
+   - object-fit:contain ensures image is always
+     visible inside its container (not clipped).
+   - width/height 100% fills the container.
+   - The class .result-img is added to every
+     img tag in the component that shows processed
+     or API result images.
+───────────────────────────────────────────── */
+.result-img {
+    display: block;
     width: 100%;
-    height: 100%;       /* بدل auto */
-    object-fit: contain;  /* يخليها جوه البوكس دايماً */
+    height: 100%;
+    object-fit: contain;
+    border-radius: inherit;
+    /* iOS: force hardware acceleration for image rendering */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* ─────────────────────────────────────────────
+   iOS FIX 4: Preview image in the upload box.
+   Same rules as result-img but allow cover for
+   the background preview to look better.
+───────────────────────────────────────────── */
+.image-box img,
+.preview-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
     border-radius: 15px;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .upload-text {
@@ -152,6 +180,7 @@
 .image-upload img {
     width: 80px;
     height: auto;
+    display: block; /* iOS fix */
 }
 
 .image-upload--mobile,
@@ -159,14 +188,6 @@
 .upload-copy--mobile {
     display: none;
 }
-
-
-/* .image-box img {
-    width: 100%;
-    height: auto;
-    border-radius: 15px;
-} */
-
 
 .upload-text h2,
 .upload-title {
@@ -191,6 +212,11 @@
     cursor: pointer;
     font-size: 14.5px;
     transition: 0.3s;
+    /* iOS fix: prevent tap highlight flash */
+    -webkit-tap-highlight-color: transparent;
+    /* iOS fix: ensure button is tappable */
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .upload-btn-label--mobile {
@@ -210,6 +236,7 @@
     flex: 1;
     height: 310px;
 }
+
 .detection-card {
     padding: 20px;
     display: flex;
@@ -240,7 +267,8 @@
     border-radius: 12px;
     border: 1px solid #E5E7EB;
     flex: 1;
-    
+    /* iOS FIX 4: prevent flex child from collapsing */
+    min-height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -248,8 +276,11 @@
     padding: 10px;
     box-shadow: 0 8px 12px -4px rgba(0, 0, 0, 0.25);
 }
-/* ================= Object Detection Image ================= */
 
+/* ─────────────────────────────────────────────
+   iOS FIX 4: Inner layers for detection and
+   segmentation. min-height prevents collapse.
+───────────────────────────────────────────── */
 .detection-inner-layer {
     width: 100%;
     height: 100%;
@@ -261,17 +292,22 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    /* iOS: establish stacking context */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .detection-inner-layer img {
-        width: 100%;
-        height: 100%;
-        min-width: 60px;
-        min-height: 60px;
-        object-fit: contain;
-        display: block;
-        background: #fff;
-
+    display: block;       /* iOS fix: remove inline baseline gap */
+    width: 100%;
+    height: 100%;
+    min-width: 60px;
+    min-height: 60px;
+    object-fit: contain;  /* FIX: was 'cover', changed to 'contain' so image is never clipped */
+    background: #fff;
+    border-radius: 10px;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 @media (max-width: 600px) {
@@ -287,6 +323,7 @@
         max-width: 100vw !important;
         max-height: 60vw !important;
     }
+
     .completed-badge {
         font-size: 13px !important;
         padding: 5px 14px !important;
@@ -324,7 +361,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     background: #22C55E;
-    color: #000; /* 👈 الأسود */
+    color: #000;
     border: none;
     width: 36px;
     height: 36px;
@@ -334,6 +371,7 @@
     opacity: 0;
     transition: 0.3s ease;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .progress-ring-wrapper:hover .cancel-btn {
@@ -343,6 +381,7 @@
 .progress-ring-wrapper:hover .progress-ring-text {
     opacity: 0;
 }
+
 /* ================= Segmentation Card ================= */
 
 .segmentation-card {
@@ -376,6 +415,7 @@
     border: 1px solid #E5E7EB;
     flex: 1;
     height: 350px;
+    min-height: 80px; /* iOS FIX 4 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -394,17 +434,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .segmentation-inner-layer img {
+    display: block; /* iOS fix */
     width: 100%;
     height: 100%;
     min-width: 60px;
     min-height: 60px;
     object-fit: contain;
     border-radius: 8px;
-    display: block;
     background: #fff;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 /* ================= Classification Card ================= */
@@ -453,23 +497,29 @@
     background-color: #F9FAFB;
     border-radius: 12px;
     border: 2px solid #555;
-
-    /* padding: 30px; */
 }
 
+/* ─────────────────────────────────────────────
+   iOS FIX 4: classification-image-box
+   needs explicit flex-shrink: 0 and min sizes
+   so it never collapses inside the flex row.
+───────────────────────────────────────────── */
 .classification-image-box {
     margin-left: 10px;
     width: 150px;
     height: 150px;
     flex-shrink: 0;
+    min-width: 80px;   /* iOS fix */
+    min-height: 80px;  /* iOS fix */
     position: relative;
     border-radius: 18px;
     overflow: hidden;
     box-shadow: 0 8px 12px -4px rgba(0, 0, 0, 0.25);
     background-color: #E5E7EB;
-    padding:6px;
+    padding: 6px;
+    -webkit-transform: translateZ(0); /* iOS compositing */
+    transform: translateZ(0);
 }
-
 
 .classification-image-box img {
     width: 100%;    
@@ -489,7 +539,7 @@
 }
 
 .info-group {
-    margin-bottom: 18px; 
+    margin-bottom: 18px;
 }
 
 .info-label {
@@ -542,12 +592,11 @@
     overflow: hidden;
 }
 
-
 .confidence-bar-fill {
-  height: 100%;
-  background-color: #22C55E;
-  border-radius: 10px;
-  transition: width 0.5s ease;
+    height: 100%;
+    background-color: #22C55E;
+    border-radius: 10px;
+    transition: width 0.5s ease;
 }
 
 .scroll-classification {
@@ -561,22 +610,23 @@
     margin-bottom: 25px;
 }
 
-.arrow-controls{
-  /* margin-right:30px; */
-  display:flex;
-  align-items:center;
-    gap:6px;
-  font-size:14px;
-  font-weight:600;
+.arrow-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
-.arrow-controls button{
-  background:#22C55E;
-  border:none;
-  color:white;
-  border-radius:20px;
-  padding:1px 4px;
-  cursor:pointer;
+.arrow-controls button {
+    background: #22C55E;
+    border: none;
+    color: white;
+    border-radius: 20px;
+    padding: 1px 4px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
 }
 
 .arrow-controls.rtl {
@@ -593,6 +643,7 @@
 [dir="rtl"] .confidence-text {
     text-align: right;
 }
+
 /* ================= Completed Badge ================= */
 
 .completed-badge {
@@ -607,6 +658,7 @@
     border-radius: 20px;
     z-index: 1;
 }
+
 /* ================= Responsive ================= */
 
 @media (max-width: 900px) {
@@ -626,7 +678,7 @@
 @media (max-width: 768px) {
     .container {
         width: calc(100% - 20px);
-        margin: 92px 0px 13px 13px ;
+        margin: 92px 0px 13px 13px;
         display: flex;
         flex-direction: column;
         gap: 16px;
@@ -678,6 +730,7 @@
         max-width: 100%;
         width: min(100%, 220px);
         height: 180px;
+        min-height: 120px; /* iOS fix */
     }
 
     .upload-text {
@@ -706,6 +759,7 @@
 
     .classification-content {
         height: 190px;
+        min-height: 120px; /* iOS fix */
         gap: 5px;
     }
 
@@ -731,6 +785,7 @@
         width: 72px;
         height: 72px;
         object-fit: contain;
+        display: block; /* iOS fix */
     }
 
     .upload-title--mobile {
@@ -757,7 +812,7 @@
         width: 100%;
         max-width: 280px;
         min-height: 46px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
 
     .upload-btn-label--desktop {
@@ -798,6 +853,7 @@
     width: 100%;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(148, 163, 184, 0.2);
+    -webkit-appearance: none;
 }
 
 .report-btn:hover {
@@ -810,7 +866,6 @@
     transform: translateY(0);
 }
 
-/* text link under classification card */
 .report-link-text {
     margin: 20px 0;
     text-align: center;
@@ -818,6 +873,7 @@
     cursor: pointer;
     font-weight: 600;
     text-decoration: underline;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .report-link-text:hover {
@@ -838,15 +894,13 @@
     justify-content: center;
     z-index: 1000;
     animation: fadeIn 0.3s ease;
+    /* iOS fix: allow scroll behind modal to stop */
+    -webkit-overflow-scrolling: touch;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .report-modal {
@@ -858,17 +912,13 @@
     max-height: 85vh;
     overflow-y: auto;
     animation: slideUp 0.3s ease;
+    /* iOS fix: smooth momentum scroll inside modal */
+    -webkit-overflow-scrolling: touch;
 }
 
 @keyframes slideUp {
-    from {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 .report-modal-header {
@@ -903,6 +953,7 @@
     justify-content: center;
     border-radius: 8px;
     transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .report-close-btn:hover {
@@ -958,43 +1009,42 @@
     gap: 20px;
 }
 
-/* donut chart styles */
+/* Donut chart */
+
 .donut-container {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
     position: relative;
 }
+
 .donut-chart {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  position: relative;
-
-  /* 🔴 Diseased = Red | 🔵 Healthy = Blue */
-  background: conic-gradient(
-    #EF4444 var(--pct),     /* Red - Diseased */
-    #3B82F6 var(--pct) 100% /* Blue - Healthy */
-  );
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    position: relative;
+    background: conic-gradient(
+        #EF4444 var(--pct),
+        #3B82F6 var(--pct) 100%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .donut-chart .donut-center {
-  width: 110px;
-  height: 110px;
-  background: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-  color: #374151;
-  text-align: center;
-  padding: 10px;
+    width: 110px;
+    height: 110px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #374151;
+    text-align: center;
+    padding: 10px;
 }
 
 .leaf-card-with-image {
@@ -1026,12 +1076,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    /* iOS fix: min sizes */
+    min-width: 80px;
+    min-height: 80px;
 }
 
 .leaf-report-image {
+    display: block; /* iOS fix */
     width: 100%;
     height: 100%;
     object-fit: cover;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .leaf-info-col {
@@ -1105,6 +1161,8 @@
     margin-top: 12px;
     width: 100%;
     transition: all 0.3s ease;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .send-to-ai-btn:hover {
@@ -1128,6 +1186,8 @@
     margin-top: 20px;
     width: 100%;
     transition: all 0.3s ease;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .send-all-btn:hover {
@@ -1139,3 +1199,97 @@
     transform: translateY(0);
 }
 
+/* ─────────────────────────────────────────────
+   iOS FIX 5: Custom mobile photo-picker
+   bottom sheet styles.
+   Uses a fixed overlay with a bottom-anchored
+   sheet. Safe-area inset for iPhone notch/bar.
+───────────────────────────────────────────── */
+
+.mobile-picker-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    /* iOS: smooth animation */
+    animation: fadeIn 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-picker-sheet {
+    background-color: #FFFFFF;
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 16px;
+    /* iOS: add safe area padding for home bar */
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: slideUp 0.25s ease;
+}
+
+.mobile-picker-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    text-align: center;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #E5E7EB;
+    margin-bottom: 4px;
+}
+
+.mobile-picker-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px 20px;
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.mobile-picker-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.mobile-picker-btn--camera {
+    background-color: #F0FDF4;
+    color: #166534;
+}
+
+.mobile-picker-btn--camera:active {
+    background-color: #DCFCE7;
+}
+
+.mobile-picker-btn--gallery {
+    background-color: #EFF6FF;
+    color: #1E40AF;
+}
+
+.mobile-picker-btn--gallery:active {
+    background-color: #DBEAFE;
+}
+
+.mobile-picker-btn--cancel {
+    background-color: #F3F4F6;
+    color: #6B7280;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.mobile-picker-btn--cancel:active {
+    background-color: #E5E7EB;
+}
