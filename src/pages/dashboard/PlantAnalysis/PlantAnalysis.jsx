@@ -1308,7 +1308,24 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                     <p className="upload-copy upload-copy--mobile upload-copy--meta">{t.mobileScanMeta}</p>
                     <button
                       className="upload-btn"
-                      onClick={() => fileInputRef.current.click()}
+                      onClick={() => {
+                        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                          // Show action sheet for camera/gallery
+                          if (window && window.navigator && window.navigator.mediaDevices && window.navigator.mediaDevices.getUserMedia) {
+                            const action = window.confirm(language === "ar" ? "اختيار صورة من الكاميرا؟ اضغط موافق للكاميرا، إلغاء للمعرض." : "Choose Camera? OK for Camera, Cancel for Gallery.");
+                            if (action) {
+                              // Camera
+                              fileInputRef.current.setAttribute("capture", "environment");
+                            } else {
+                              // Gallery
+                              fileInputRef.current.removeAttribute("capture");
+                            }
+                          }
+                        } else {
+                          fileInputRef.current.removeAttribute("capture");
+                        }
+                        fileInputRef.current.click();
+                      }}
                     >
                       <span className="upload-btn-label upload-btn-label--desktop">Upload Image</span>
                       <span className="upload-btn-label upload-btn-label--mobile">
@@ -1346,7 +1363,6 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                   hidden
                   ref={fileInputRef}
                   accept="image/*"
-                  capture="environment"
                   onChange={(e) => handleFile(e.target.files[0])}
                 />
               </div>
