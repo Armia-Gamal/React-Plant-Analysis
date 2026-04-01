@@ -1345,7 +1345,8 @@ After analyzing ALL diseases above, provide a comprehensive conclusion:
                   type="file"
                   hidden
                   ref={fileInputRef}
-                  accept="image/png, image/jpeg"
+                  accept="image/*"
+                  capture="environment"
                   onChange={(e) => handleFile(e.target.files[0])}
                 />
               </div>
