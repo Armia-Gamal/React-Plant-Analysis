@@ -268,7 +268,7 @@
     border: 1px solid #E5E7EB;
     flex: 1;
     /* iOS FIX 4: prevent flex child from collapsing */
-    min-height: 80px;
+    min-height: 160px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -428,7 +428,7 @@
     width: 94%;
     height: 94%;
     min-width: 80px;
-    min-height: 80px;
+    min-height: 160px;
     background-color: #FFFFFF;
     border-radius: 10px;
     display: flex;
@@ -1078,7 +1078,7 @@
     justify-content: center;
     /* iOS fix: min sizes */
     min-width: 80px;
-    min-height: 80px;
+    min-height: 160px;
 }
 
 .leaf-report-image {
@@ -1292,4 +1292,19 @@
 
 .mobile-picker-btn--cancel:active {
     background-color: #E5E7EB;
+}
+@supports (-webkit-touch-callout: none) {
+
+    .detection-inner-layer,
+    .segmentation-inner-layer {
+        min-height: 140px; /* 🔥 يطول الكارد */
+    }
+
+    .detection-inner-layer img,
+    .segmentation-inner-layer img {
+        height: 100%;
+        width: 100%;
+        object-fit: contain;
+    }
+
 }
