@@ -19,7 +19,8 @@
 ---
 
 ## Live Demo
-https://nabta-system.tech
+
+[![Website](https://img.shields.io/badge/Visit-nabta--system.tech-black?style=for-the-badge&logo=vercel&logoColor=white)](https://nabta-system.tech)
 
 ---
 
@@ -381,6 +382,36 @@ This design ensures:
 
 ---
 
+## System Design & Architecture Diagrams
+
+To provide a comprehensive understanding of the system, the following UML diagrams illustrate the architecture from high-level user interactions to low-level implementation details.
+
+These diagrams are organized from conceptual (Use Case) to procedural (Activity) to structural (Class) views of the system.
+
+### 🔹 Use Case Diagram
+
+Represents the interaction between users, the system, and external services.
+
+[![Use Case Diagram](./images/usecase.png)](./images/usecase.png)
+
+---
+
+### 🔹 Activity Diagram
+
+Illustrates the complete workflow of the system, from user actions to AI-driven processing and result generation.
+
+[![Activity Diagram](./images/activity.jpeg)](./images/activity.jpeg)
+
+---
+
+### 🔹 Class Diagram
+
+Describes the internal structure of the system, including core components, relationships, and data flow.
+
+[![Class Diagram](./images/class.png)](./images/class.png)
+
+---
+
 ## System Workflow
 
 1. User uploads a plant image  
@@ -416,6 +447,47 @@ This design ensures:
 - Expanded dataset coverage  
 - Edge deployment for real-time inference  
 - Model optimization for low-latency environments  
+
+---
+
+## Team
+
+**Supervisor: Dr. Mourad Raafat**
+
+Meet the team behind NABTA AI System.
+
+<table>
+  <tr>
+    <td align="center">
+      <b>Armia Gamal</b><br/>
+      AI BACKEND ENGINEER
+    </td>
+    <td align="center">
+      <b>Sara Essam</b><br/>
+      Computer Vision Engineer
+    </td>
+    <td align="center">
+      <b>Sherif Karam</b><br/>
+      ML Engineer
+    </td>
+    <td align="center">
+      <b>Salsabel Esmail</b><br/>
+      Data Science Engineer
+    </td>
+    <td align="center">
+      <b>Ziad Walid Mokhtar</b><br/>
+      ML Engineer
+    </td>
+    <td align="center">
+      <b>Peter Bolbol</b><br/>
+      Front-End Engineer
+    </td>
+    <td align="center">
+      <b>Shada Ayman ElDin</b><br/>
+      NLP Engineer
+    </td>
+  </tr>
+</table>
 
 ---
 
