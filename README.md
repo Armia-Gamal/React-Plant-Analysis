@@ -404,11 +404,35 @@ Illustrates the complete workflow of the system, from user actions to AI-driven 
 
 ---
 
+### 🔹 Sequence Diagram
+
+Illustrates the communication flow between frontend, backend, AI models, and external services during the plant disease analysis process.
+
+[![Sequence Diagram](./images/Sequence.jpeg)](./images/Sequence.jpeg)
+
+---
+
 ### 🔹 Class Diagram
 
 Describes the internal structure of the system, including core components, relationships, and data flow.
 
 [![Class Diagram](./images/class.png)](./images/class.png)
+
+---
+
+### 🔹 Component Diagram
+
+Represents the high-level software architecture and interaction between system modules such as frontend, backend, AI models, database, and external APIs.
+
+[![Component Diagram](./images/Component.png)](./images/Component.png)
+
+---
+
+### 🔹 Deployment Diagram
+
+Illustrates the physical deployment architecture of the system, including servers, cloud services, APIs, databases, and deployed AI models.
+
+[![Deployment Diagram](./images/Deployment.jpeg)](./images/Deployment.jpeg)
 
 ---
 
