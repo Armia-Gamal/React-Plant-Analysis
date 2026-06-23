@@ -39,7 +39,6 @@ html[data-theme] input::placeholder, html[data-theme] textarea::placeholder { co
 html[data-theme] .login-layout,
 html[data-theme] .signup-layout,
 html[data-theme] .reset-page { color: var(--app-text); }
-html[data-theme="light"] .login-layout { background: linear-gradient(135deg,#fbfcf8,#eef5eb); }
 html[data-theme="dark"] .login-layout { background: radial-gradient(circle at 15% 20%,rgba(101,231,143,.11),transparent 28%),radial-gradient(circle at 78% 35%,rgba(92,91,255,.09),transparent 31%),var(--app-bg); }
 html[data-theme] .login-card-box,
 html[data-theme] .signup-card,
@@ -56,9 +55,38 @@ html[data-theme] .Reset-footer { color: var(--app-text); }
 html[data-theme] .login-card-box p,
 html[data-theme] .login-card-box label { color: var(--app-muted); }
 html[data-theme] .login-card-box input,
+html[data-theme] .reset-page-hero {
+  background-image: url("./assets/images/sign-up.png");
+}
+html[data-theme] .reset-page-hero[dir="rtl"] {
+  background-image: url("./assets/images/ar-sign-up.png");
+}
+html[data-theme="dark"] .reset-page-hero {
+  background-image: url("./assets/images/sign-up-ni.png");
+}
 html[data-theme] .signup-card input,
 html[data-theme] .Reset-card input { background: var(--app-surface-2); color: var(--app-text); border-color: var(--app-border); outline: none; transition: border-color .2s,box-shadow .2s,background .2s; }
-html[data-theme] .login-card-box input:focus,
+
+/* Dark mode autofill styles for login, signup, and reset forms */
+html[data-theme="dark"] .login-card-box input:-webkit-autofill,
+html[data-theme="dark"] .signup-card input:-webkit-autofill,
+html[data-theme="dark"] .Reset-card input:-webkit-autofill,
+html[data-theme="dark"] .tp-field input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 40px var(--app-surface) inset !important;
+  -webkit-text-fill-color: var(--app-text) !important;
+  caret-color: var(--app-text);
+  border-color: var(--app-border);
+  transition: background-color 600000s 0s; /* Long transition to override browser styles */
+}
+
+html[data-theme="dark"] .login-card-box input:-webkit-autofill:focus,
+html[data-theme="dark"] .signup-card input:-webkit-autofill:focus,
+html[data-theme="dark"] .Reset-card input:-webkit-autofill:focus,
+html[data-theme="dark"] .tp-field input:-webkit-autofill:focus {
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb,var(--app-accent) 13%,transparent), 0 0 0 40px var(--app-surface) inset !important;
+}
+
 html[data-theme] .signup-card input:focus,
 html[data-theme] .Reset-card input:focus { border-color: var(--app-accent); box-shadow: 0 0 0 4px color-mix(in srgb,var(--app-accent) 13%,transparent); background: var(--app-surface); }
 html[data-theme] .login-btn-main,

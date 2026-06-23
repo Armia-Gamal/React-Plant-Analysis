@@ -3,8 +3,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "../../index.css";
 import "./Login.css";
 import image from "../../assets/images/Image.png";
+import darkImage from "../../assets/images/nig.png";
+import darkArImage from "../../assets/images/Image-ar-ni.png";
 import arImage from "../../assets/images/Ar-Image.png";
 import { useLanguage } from "../../context/LanguageContext";
+import { useTheme } from "../../context/ThemeContext";
 
 import {
   signInWithEmailAndPassword,
@@ -69,6 +72,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { language } = useLanguage();
+  const { theme } = useTheme();
   const t = text[language] || text.en;
   const notAccess = location && location.state && location.state.notAccess;
   const [showNotAccess, setShowNotAccess] = useState(false);
@@ -340,7 +344,7 @@ export default function Login() {
       </section>
 
       <section className="login-right">
-        <img src={language === "ar" ? arImage : image} alt="login" />
+        <img src={theme === 'dark' ? (language === 'ar' ? darkArImage : darkImage) : (language === "ar" ? arImage : image)} alt="login" />
       </section>
     </main>
   );

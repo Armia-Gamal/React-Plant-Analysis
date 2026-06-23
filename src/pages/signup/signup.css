@@ -209,3 +209,11 @@
   }
 
 }
+
+html[data-theme="dark"] .signup-hero {
+  background-image: url("../../assets/images/sign-up-ni.png");
+}
+
+html[data-theme="dark"] [dir="rtl"] .signup-hero {
+  background-image: url("../../assets/images/sign-up-ni-ar.png");
+}
