@@ -56,6 +56,8 @@
   margin-top: -15px;
 }
 
+.sidebar-logo-dark { display: none; }
+
 .sidebar-mobile-close {
   display: none;
   position: absolute;

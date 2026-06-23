@@ -104,8 +104,12 @@ export default function Sidebar({
           <img
             src={activeLogo}
             alt="Nabta Logo"
-            className={language === "ar" ? "sidebar-logo-ar" : ""}
+            className={`sidebar-logo-light ${language === "ar" ? "sidebar-logo-ar" : ""}`}
           />
+          <span className="sidebar-logo-dark" aria-label="NABTA">
+            <img src="/Logos.png" alt="" aria-hidden="true" />
+            <strong>{language === "ar" ? "نبتة" : "NABTA"}</strong>
+          </span>
         </div>
 
         <hr />

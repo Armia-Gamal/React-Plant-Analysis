@@ -6,6 +6,8 @@ import logo from "../../assets/images/Logo.svg";
 import arabicLogo from "../../assets/images/lllls.png";
 import languageIcon from "../../assets/images/language-svgrepo-com.svg";
 import { useLanguage } from "../../context/LanguageContext";
+import { useTheme } from "../../context/ThemeContext";
+import { Moon, Sun } from "lucide-react";
 
 const text = {
   en: {
@@ -17,7 +19,9 @@ const text = {
     getStarted: "Get Started",
     langLabel: "Switch language",
     openMenu: "Open navigation menu",
-    closeMenu: "Close navigation menu"
+    closeMenu: "Close navigation menu",
+    lightMode: "Switch to light mode",
+    darkMode: "Switch to dark mode"
   },
   ar: {
     home: "\u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629",
@@ -28,7 +32,9 @@ const text = {
     getStarted: "\u0627\u0628\u062F\u0623 \u0627\u0644\u0622\u0646",
     langLabel: "\u062A\u063A\u064A\u064A\u0631 \u0627\u0644\u0644\u063A\u0629",
     openMenu: "\u0641\u062A\u062D \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u062A\u0646\u0642\u0644",
-    closeMenu: "\u0625\u063A\u0644\u0627\u0642 \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u062A\u0646\u0642\u0644"
+    closeMenu: "\u0625\u063A\u0644\u0627\u0642 \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u062A\u0646\u0642\u0644",
+    lightMode: "\u0627\u0644\u062A\u0628\u062F\u064A\u0644 \u0625\u0644\u0649 \u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0641\u0627\u062A\u062D",
+    darkMode: "\u0627\u0644\u062A\u0628\u062F\u064A\u0644 \u0625\u0644\u0649 \u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u062F\u0627\u0643\u0646"
   }
 };
 
@@ -36,6 +42,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { language, changeLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const t = text[language] || text.en;
 
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -201,10 +208,30 @@ export default function Navbar() {
     );
   };
 
+  const renderThemeSwitcher = (variant) => (
+    <button
+      type="button"
+      className={`theme-toggle ${variant === "mobile" ? "mobile-theme-toggle" : ""}`}
+      onClick={toggleTheme}
+      aria-label={theme === "dark" ? t.lightMode : t.darkMode}
+      title={theme === "dark" ? t.lightMode : t.darkMode}
+    >
+      <span className="theme-toggle-track" aria-hidden="true">
+        <Sun className="theme-sun" size={16} />
+        <Moon className="theme-moon" size={15} />
+        <i className="theme-toggle-thumb" />
+      </span>
+    </button>
+  );
+
   return (
     <nav className="navbar" dir={language === "ar" ? "rtl" : "ltr"} ref={navbarRef}>
       <div className="nav-logo">
-        <img src={language === "ar" ? arabicLogo : logo} alt="logo" />
+        <img className="nav-logo-light" src={language === "ar" ? arabicLogo : logo} alt="NABTA" />
+        <span className="nav-logo-dark" aria-label="NABTA">
+          <img src="/Logos.png" alt="" aria-hidden="true" />
+          <strong>{language === "ar" ? "نبتة" : "NABTA"}</strong>
+        </span>
       </div>
 
       <ul className="nav-links">
@@ -216,6 +243,7 @@ export default function Navbar() {
       </ul>
 
       <div className="nav-actions desktop-nav-actions">
+        {renderThemeSwitcher("desktop")}
         {renderLanguageSwitcher("desktop")}
 
         <button className="nav-btn" onClick={handleLoginNavigation}>
@@ -259,6 +287,7 @@ export default function Navbar() {
           <div className="mobile-menu-divider"></div>
 
           <div className="mobile-menu-footer">
+            {renderThemeSwitcher("mobile")}
             <div className="mobile-language-group">
               <span className="mobile-menu-label">{t.langLabel}</span>
               {renderLanguageSwitcher("mobile")}

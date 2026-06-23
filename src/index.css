@@ -20,3 +20,7 @@ body {
   flex-direction: column;
   /* overflow: hidden; */
 }
+
+html, body { transition: background-color .35s ease, color .35s ease; }
+html[data-theme="dark"] body { background: #080d0b; }
+html[data-theme="light"] body { background: #f7f9f4; }

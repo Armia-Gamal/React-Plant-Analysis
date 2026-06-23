@@ -9,6 +9,7 @@ import Profile from "../../pages/dashboard/Profile/Profile";
 import CustomData from "../../pages/dashboard/CustomData/CustomData";
 import { auth, db } from "../../firebase";
 import { useLanguage } from "../../context/LanguageContext";
+import { useTheme } from "../../context/ThemeContext";
 import CustomDataButton from "../Premium/CustomDataButton";
 import PricingModal from "../Premium/PricingModal";
 import languageIcon from "../../assets/images/language-svgrepo-com.svg";
@@ -118,6 +119,8 @@ const text = {
 
 export default function Dashboard() {
   const { language, changeLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
+  const isThemeDark = theme === "dark";
   const t = text[language] || text.en;
   const languageMenuRef = useRef(null);
   const profileMenuRef = useRef(null);
@@ -144,7 +147,6 @@ export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [isThemeDark, setIsThemeDark] = useState(() => localStorage.getItem("nabta_dashboard_theme") === "dark");
   const [authUser, setAuthUser] = useState(null);
   const [userProfile, setUserProfile] = useState({
     name: "",
@@ -238,19 +240,6 @@ export default function Dashboard() {
   }, [isSidebarOpen]);
 
   useEffect(() => {
-    if (typeof document === "undefined") {
-      return undefined;
-    }
-
-    document.body.classList.toggle("dashboard-theme-dark", isThemeDark);
-    localStorage.setItem("nabta_dashboard_theme", isThemeDark ? "dark" : "light");
-
-    return () => {
-      document.body.classList.remove("dashboard-theme-dark");
-    };
-  }, [isThemeDark]);
-
-  useEffect(() => {
     let unsubscribeUserDoc = () => {};
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -328,7 +317,7 @@ export default function Dashboard() {
   };
 
   const handleThemeToggle = () => {
-    setIsThemeDark((prev) => !prev);
+    toggleTheme();
   };
 
   // render all pages but hide the inactive ones; this preserves state such as images
@@ -562,8 +551,24 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          <div className="nav-icon">🔔</div>
-          <div className="nav-icon">☀</div>
+          <button
+            type="button"
+            className={`nav-icon nav-icon-button ${notificationsEnabled ? "is-active" : ""}`}
+            onClick={() => setNotificationsEnabled((prev) => !prev)}
+            aria-label={t.notifications || "Notifications"}
+            title={t.notifications || "Notifications"}
+          >
+            <BellIcon />
+          </button>
+          <button
+            type="button"
+            className="nav-icon nav-icon-button dashboard-theme-toggle"
+            onClick={handleThemeToggle}
+            aria-label={isThemeDark ? (t.light || "Light mode") : (t.dark || "Dark mode")}
+            title={isThemeDark ? (t.light || "Light mode") : (t.dark || "Dark mode")}
+          >
+            {isThemeDark ? <MoonIcon /> : <SunIcon />}
+          </button>
           <div className="topbar-divider"></div>
           <div className="topbar-user">
             <img
