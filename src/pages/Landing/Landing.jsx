@@ -52,13 +52,13 @@ const copy = {
 };
 
 const members = [
-  { name: "Sherif Karam", code: "SK", color: "#b8ff65" },
   { name: "Armia Gamal", code: "AG", color: "#83e7ff" },
+  { name: "Sherif Karam", code: "SK", color: "#b8ff65" },
+  { name: "Sara Essam", code: "SE", color: "#ff9f87" },
   { name: "Ziad Walid", code: "ZW", color: "#ffc46b" },
   { name: "Peter Polbol", code: "PP", color: "#c7a7ff" },
-  { name: "Salsabel Ismail", code: "SI", color: "#ff94bd" },
   { name: "Shada Ayman", code: "SA", color: "#8fffd5" },
-  { name: "Sara Essam", code: "SE", color: "#ff9f87" }
+  { name: "Salsabel Ismail", code: "SI", color: "#ff94bd" },
 ];
 const icons = { camera: Camera, bot: Bot, history: Database, care: WandSparkles };
 

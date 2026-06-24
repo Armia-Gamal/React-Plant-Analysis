@@ -2,10 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import "./Sidebar.css";
-import logo from "../../assets/images/Logo.svg";
-import logoArabic from "../../assets/images/lllls.png";
 import plantIcon from "../../assets/images/plant-icon.png";
 import plantIconActive from "../../assets/images/plant-icon-active.png";
+import agricultureIcon from "../../assets/images/Agriculture.svg";
+import agricultureIconLight from "../../assets/images/Agriculture.svg";
+import irrigationIcon from "../../assets/images/Irrigation.svg";
+import irrigationIconLight from "../../assets/images/Irrigation-w.svg";
+import recommendationIcon from "../../assets/images/Recommendation.svg";
+import recommendationIconLight from "../../assets/images/Recommendation-w.svg";
 import aiIconInactive from "../../assets/images/hubot-svgrepo-com.svg";
 import aiIcon from "../../assets/images/hubot-svgrepo-com (3).svg";
 import historyIconInactive from "../../assets/images/history-svgrepo-com.svg";
@@ -16,12 +20,16 @@ import profileIconInactive from "../../assets/images/profile-svgrepo-com.svg";
 import profileIcon from "../../assets/images/profile-svgrepo-com (1).svg";
 import { auth } from "../../firebase";
 import { useLanguage } from "../../context/LanguageContext";
+import { useTheme } from "../../context/ThemeContext";
 
 const text = {
   en: {
     plant: "Plant Analysis",
     ai: "AI Assistant",
     history: "History",
+    agriculture: "Agriculture",
+    irrigation: "Irrigation",
+    cropRecommendation: "Recommendation",
     customData: "Custom Data",
     pro: "PRO",
     accountPages: "ACCOUNT PAGES",
@@ -29,9 +37,12 @@ const text = {
     signOut: "Sign Out"
   },
   ar: {
-    plant: "\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0646\u0628\u0627\u062a",
+    plant: "تحليل النبات",
     ai: "\u0627\u0644\u0645\u0633\u0627\u0639\u062f \u0627\u0644\u0630\u0643\u064a",
     history: "\u0627\u0644\u0633\u062c\u0644",
+    agriculture: "الزراعة",
+    irrigation: "الري",
+    cropRecommendation: "توصيات المحاصيل",
     customData: "\u0628\u064a\u0627\u0646\u0627\u062a \u0645\u062e\u0635\u0635\u0629",
     pro: "PRO",
     accountPages: "\u0635\u0641\u062d\u0627\u062a \u0627\u0644\u062d\u0633\u0627\u0628",
@@ -50,9 +61,11 @@ export default function Sidebar({
 }) {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { theme } = useTheme();
   const t = text[language] || text.en;
-  const activeLogo = language === "ar" ? logoArabic : logo;
   const [customDataHovered, setCustomDataHovered] = useState(false);
+  const [isAgricultureOpen, setIsAgricultureOpen] = useState(false);
+  const [hoveredAgricultureItem, setHoveredAgricultureItem] = useState("");
 
   const closeSidebar = () => {
     if (typeof onClose === "function") {
@@ -102,14 +115,10 @@ export default function Sidebar({
             X
           </button>
           <img
-            src={activeLogo}
+            src="/src/assets/images/Logo.svg"
             alt="Nabta Logo"
-            className={`sidebar-logo-light ${language === "ar" ? "sidebar-logo-ar" : ""}`}
+            className="sidebar-logo-light"
           />
-          <span className="sidebar-logo-dark" aria-label="NABTA">
-            <img src="/Logos.png" alt="" aria-hidden="true" />
-            <strong>{language === "ar" ? "نبتة" : "NABTA"}</strong>
-          </span>
         </div>
 
         <hr />
@@ -124,6 +133,66 @@ export default function Sidebar({
             </div>
             <span>{t.plant}</span>
           </li>
+
+          {/* Agriculture Collapsible Section */}
+          <li
+            className={`collapsible-item ${isAgricultureOpen ? "open" : ""}`}
+            onClick={() => setIsAgricultureOpen(!isAgricultureOpen)}
+          >
+            <div className="menu-icon">
+              <img
+                src={isAgricultureOpen ? agricultureIconLight : agricultureIcon}
+                alt="Agriculture"
+              />
+            </div>
+            <span>{t.agriculture}</span>
+            <svg
+              className="chevron-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </li>
+          <ul className={`submenu ${isAgricultureOpen ? "open" : ""}`}>
+            <li
+              className={activePage === "irrigation" ? "active-item" : ""}
+              onClick={() => handlePageChange("irrigation")}
+            >
+              <div className="menu-icon">
+                <img
+                  src={activePage === "irrigation" ? irrigationIconLight : irrigationIcon}
+                  alt="Irrigation"
+                />
+              </div>
+              <span>{t.irrigation}</span>
+            </li>
+            <li
+              className={
+                activePage === "crop-recommendation" ? "active-item" : ""
+              }
+              onClick={() => handlePageChange("crop-recommendation")}
+            >
+              <div className="menu-icon">
+                <img
+                  src={
+                    activePage === "crop-recommendation" ? recommendationIconLight : recommendationIcon
+                  }
+                  alt="Recommendation"
+                  className="recommendation-menu-icon"
+                />
+              </div>
+              <span>{t.cropRecommendation}</span>
+            </li>
+          </ul>
+          {/* End Agriculture Section */}
 
           <li
             className={activePage === "ai" ? "active-item" : ""}

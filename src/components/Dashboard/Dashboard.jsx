@@ -7,6 +7,8 @@ import AIAssistant from "../../pages/dashboard/AIAssistant/AIAssistant";
 import History from "../../pages/dashboard/History/History";
 import Profile from "../../pages/dashboard/Profile/Profile";
 import CustomData from "../../pages/dashboard/CustomData/CustomData";
+import Irrigation from "../../pages/dashboard/Agriculture/Irrigation/Irrigation";
+import CropRecommendation from "../../pages/dashboard/Agriculture/Crop-Recommendation/Crop-Recommendation";
 import { auth, db } from "../../firebase";
 import { useLanguage } from "../../context/LanguageContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -74,6 +76,8 @@ const text = {
     plant: "Plant Analysis",
     ai: "AI Assistant",
     history: "History",
+    irrigation: "Irrigation",
+    cropRecommendation: "Crop Recommendation",
     customData: "Custom Data",
     profile: "Profile",
     upload: "Upload",
@@ -101,6 +105,8 @@ const text = {
     plant: "تحليل النبات",
     ai: "المساعد الذكي",
     history: "السجل",
+    irrigation: "الري",
+    cropRecommendation: "ترشيح المحاصيل",
     customData: "بيانات مخصصة",
     profile: "الملف الشخصي",
     upload: "رفع",
@@ -344,6 +350,12 @@ export default function Dashboard() {
         <div className={activePage === "history" ? "" : "hidden"}>
           <History />
         </div>
+        <div className={activePage === "irrigation" ? "" : "hidden"}>
+          <Irrigation />
+        </div>
+        <div className={activePage === "crop-recommendation" ? "" : "hidden"}>
+          <CropRecommendation />
+        </div>
         <div className={activePage === "profile" ? "" : "hidden"}>
           <Profile />
         </div>
@@ -363,9 +375,11 @@ export default function Dashboard() {
     activePage === "plant" ? t.plant
       : activePage === "ai" ? t.ai
         : activePage === "history" ? t.history
-          : activePage === "profile" ? t.profile
-            : activePage === "custom-data" ? t.customData
-              : t.dashboard;
+          : activePage === "irrigation" ? t.irrigation
+            : activePage === "crop-recommendation" ? t.cropRecommendation
+              : activePage === "profile" ? t.profile
+                : activePage === "custom-data" ? t.customData
+                  : t.dashboard;
   const progressLabels = [t.upload, t.detect, t.segment, t.classify];
   const getConnectorProgress = (index) => {
     if (index === 0) {
@@ -424,6 +438,8 @@ export default function Dashboard() {
                 {activePage === "plant" && ` ${t.plant}`}
                 {activePage === "ai" && ` ${t.ai}`}
                 {activePage === "history" && ` ${t.history}`}
+                {activePage === "irrigation" && ` ${t.irrigation}`}
+                {activePage === "crop-recommendation" && ` ${t.cropRecommendation}`}
                 {activePage === "profile" && ` ${t.profile}`}
                 {activePage === "custom-data" && ` ${t.customData}`}
               </span>

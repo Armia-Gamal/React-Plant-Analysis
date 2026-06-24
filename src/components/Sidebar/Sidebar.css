@@ -94,6 +94,7 @@
   margin-bottom: 15px;
   cursor: pointer;
   transition: 0.3s;
+  position: relative;
 }
 
 .pro-pill {
@@ -117,6 +118,47 @@
   background-color: #E6F7F5;
 }
 
+.collapsible-item {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.collapsible-item span {
+  min-width: 0;
+}
+
+.chevron-icon {
+  width: 16px;
+  height: 16px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.collapsible-item.open .chevron-icon {
+  transform: rotate(180deg);
+}
+
+.submenu {
+  display: none;
+  list-style: none;
+  padding: 0;
+  margin: -8px 0 12px 18px;
+}
+
+[dir="rtl"] .submenu {
+  margin-right: 18px;
+  margin-left: 0;
+}
+
+.submenu.open {
+  display: block;
+}
+
+.submenu li {
+  margin-bottom: 8px;
+}
+
 .active-item {
   background-color: white;
   font-weight: 600;
@@ -126,15 +168,29 @@
 .menu-icon {
   width: 30px;
   height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  max-width: 30px;
+  max-height: 30px;
+  flex: 0 0 30px;
   background-color: white;
-  border-radius: 20px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .menu-icon img {
   width: 22px;
+  height: 22px;
+  display: block;
+  object-fit: contain;
+}
+
+.menu-icon img.recommendation-menu-icon {
+  width: 25px;
+  height: 25px;
 }
 
 .active-item .menu-icon {
@@ -145,6 +201,7 @@
   font-size: 10px;
   font-weight: 700;
   color: #9CA3AF;
+  text-transform: uppercase;
   letter-spacing: 1px;
   padding: 0 10px;
   margin-bottom: 10px;

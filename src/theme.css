@@ -132,8 +132,8 @@ html[data-theme] .dot-done,html[data-theme] .dot-line-fill,html[data-theme] .dot
 /* Sidebar */
 html[data-theme] .sidebar { background: color-mix(in srgb,var(--app-surface) 96%,transparent); color: var(--app-text); border-color: var(--app-border); }
 html[data-theme="dark"] .sidebar { background: linear-gradient(180deg,rgba(14,23,18,.98),rgba(8,14,11,.98)); box-shadow: 18px 0 55px rgba(0,0,0,.24); }
-html[data-theme="dark"] .sidebar-logo-light { display:none; }
-html[data-theme="dark"] .sidebar-logo-dark { display:inline-flex;align-items:center;gap:10px;color:#f4faf6; }
+html[data-theme="dark"] .sidebar-logo-light { display:block; }
+html[data-theme="dark"] .sidebar-logo-dark { display:none; }
 html[data-theme="dark"] .sidebar-logo-dark img { display:block;width:38px;height:38px;object-fit:contain;filter:none; }
 html[data-theme="dark"] .sidebar-logo-dark strong { font:800 21px 'Manrope',sans-serif;letter-spacing:.08em; }
 html[data-theme="light"] .sidebar-logo-dark { display:none; }

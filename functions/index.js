@@ -109,15 +109,21 @@ exports.keepHuggingFaceAlive = functions.pubsub
   .schedule("every 10 minutes")
   .timeZone("UTC")
   .onRun(async (context) => {
-    try {
-      const response = await fetch(
-        "https://armia-gamal-plant-leaf-detection-api.hf.space"
-      );
+    const urls = [
+      "https://armia-gamal-plant-leaf-detection-api.hf.space",
+      "https://armia-gamal-agritech-api.hf.space"
+    ];
 
-      console.log("HF Ping Status:", response.status);
-    } catch (error) {
-      console.error("HF Ping Failed:", error);
-    }
+    await Promise.all(
+      urls.map(async (url) => {
+        try {
+          const response = await fetch(url);
+          console.log(`${url} -> ${response.status}`);
+        } catch (error) {
+          console.error(`${url} -> Ping Failed`, error);
+        }
+      })
+    );
 
     return null;
   });
