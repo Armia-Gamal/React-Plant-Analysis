@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import "./Sidebar.css";
+import logo from "../../assets/images/Logo.svg";
+import arabicLogo from "../../assets/images/lllls.png";
 import plantIcon from "../../assets/images/plant-icon.png";
 import plantIconActive from "../../assets/images/plant-icon-active.png";
 import agricultureIcon from "../../assets/images/Agriculture.svg";
@@ -115,7 +117,7 @@ export default function Sidebar({
             X
           </button>
           <img
-            src="../../assets/images/logo.png"
+            src={language === "ar" ? arabicLogo : logo}
             alt="Nabta Logo"
             className="sidebar-logo-light"
           />

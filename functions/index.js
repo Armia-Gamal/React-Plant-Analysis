@@ -31,6 +31,18 @@ exports.sendWelcomeEmail = functions.https.onCall(async (data, context) => {
       );
     }
 
+    if (!gmailUser || !gmailPass) {
+      console.error("Email config missing:", {
+        hasGmailUser: Boolean(gmailUser),
+        hasGmailPass: Boolean(gmailPass)
+      });
+
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Email service is not configured."
+      );
+    }
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -40,31 +52,31 @@ exports.sendWelcomeEmail = functions.https.onCall(async (data, context) => {
     });
 
     const mailOptions = {
-      from: `Nabta-Seniors <${gmailUser}>`,
+      from: `Nabta-System <${gmailUser}>`,
       to: email,
-      subject: `Welcome to Nabta-Seniors, ${name}! ❤️`,
+      subject: `Welcome to Nabta-System, ${name}! ❤️`,
       html: `
 <div style="font-family: system-ui, sans-serif, Arial; font-size: 16px; background-color: #fff8f1;">
   <div style="max-width: 600px; margin: auto; padding: 20px;">
 
-    <a href="https://nabta-seniors.netlify.app/" target="_blank" style="text-decoration:none;">
+    <a href="https://nabta-system.tech/" target="_blank" style="text-decoration:none;">
       <img 
         src="https://i.imgur.com/A0LWWKw.png"
-        alt="Nabta-Seniors Logo"
+        alt="Nabta-System Logo"
         style="height:50px; margin-bottom:20px;"
       />
     </a>
 
-    <p>Welcome to the Nabta-Seniors family ❤️ We're excited to have you on board.</p>
+    <p>Welcome to the Nabta-System family ❤️ We're excited to have you on board.</p>
 
     <p>Your account has been successfully created, and you're now ready to explore all the great features we offer.</p>
 
     <p>
       <a 
-        href="https://nabta-seniors.netlify.app/"
+        href="https://nabta-system.tech/"
         target="_blank"
         style="display:inline-block; text-decoration:none; color:#ffffff; background-color:#fc0038; padding:10px 20px; border-radius:6px; font-weight:bold;">
-        Open Nabta-Seniors
+        Open Nabta-System
       </a>
     </p>
 
@@ -72,7 +84,7 @@ exports.sendWelcomeEmail = functions.https.onCall(async (data, context) => {
 
     <p>
       Best regards,<br>
-      <strong>The Nabta-Seniors Team</strong>
+      <strong>The Nabta-System Team</strong>
     </p>
 
     <hr style="margin-top:30px;" />
@@ -93,11 +105,18 @@ exports.sendWelcomeEmail = functions.https.onCall(async (data, context) => {
     return { success: true };
 
   } catch (error) {
-    console.error("Email error:", error);
-    throw new functions.https.HttpsError(
-      "internal",
-      "Failed to send email."
-    );
+    const message = error?.message || "Failed to send email.";
+    console.error("Email error:", {
+      message,
+      code: error?.code,
+      stack: error?.stack
+    });
+
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+
+    throw new functions.https.HttpsError("internal", message);
   }
 });
 
