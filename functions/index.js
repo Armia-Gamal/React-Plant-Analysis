@@ -2,6 +2,7 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 const fetch = require("node-fetch"); // هنستخدمه للـ ping
+require("dotenv").config();
 
 admin.initializeApp();
 

@@ -115,7 +115,7 @@ export default function Sidebar({
             X
           </button>
           <img
-            src="/src/assets/images/Logo.svg"
+            src="../../assets/images/logo.png"
             alt="Nabta Logo"
             className="sidebar-logo-light"
           />
