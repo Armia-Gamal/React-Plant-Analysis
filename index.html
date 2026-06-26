@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/Logos.png" />
+    <link rel="icon" type="image/svg+xml" href="/assets/Logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#070c09" />
     <script>
@@ -15,7 +15,13 @@
         document.documentElement.style.colorScheme = theme;
       })();
     </script>
-    <title>Nabta Seniors</title>
+    <title>NABTA</title>
+    <style>
+      /* Ensure mobile menu toggle is visible in light mode */
+      html[data-theme='light'] .mobile-menu-toggle {
+        color: #1f2937; /* A dark gray for better visibility than pure black */
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
