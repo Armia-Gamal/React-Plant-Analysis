@@ -10,7 +10,7 @@
         const saved = localStorage.getItem("nabta-theme");
         const theme = saved === "light" || saved === "dark"
           ? saved
-          : matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          : matchMedia("(prefers-color-scheme: light)").matches ? "light" : "light";
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
       })();
