@@ -61,7 +61,7 @@ exports.sendWelcomeEmail = functions.https.onCall(async (data, context) => {
 
     <a href="https://nabta-system.tech/" target="_blank" style="text-decoration:none;">
       <img 
-        src="https://i.imgur.com/A0LWWKw.png"
+        src="https://firebasestorage.googleapis.com/v0/b/gp-hu-42ca5.firebasestorage.app/o/%D9%8A%D8%B3%20(1).png?alt=media&token=6cf4c7b3-2956-456d-a23c-d16719d2e6ad"
         alt="Nabta-System Logo"
         style="height:50px; margin-bottom:20px;"
       />

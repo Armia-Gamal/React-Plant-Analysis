@@ -36,9 +36,6 @@ html[data-theme] input, html[data-theme] textarea, html[data-theme] select { fon
 html[data-theme] input::placeholder, html[data-theme] textarea::placeholder { color: var(--app-faint); }
 
 /* Authentication */
-html[data-theme] .login-layout,
-html[data-theme] .signup-layout,
-html[data-theme] .reset-page { color: var(--app-text); }
 html[data-theme="dark"] .login-layout { background: radial-gradient(circle at 15% 20%,rgba(101,231,143,.11),transparent 28%),radial-gradient(circle at 78% 35%,rgba(92,91,255,.09),transparent 31%),var(--app-bg); }
 html[data-theme] .login-card-box,
 html[data-theme] .signup-card,
