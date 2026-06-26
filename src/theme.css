@@ -142,9 +142,9 @@ html[data-theme] .menu li { color: var(--app-muted); position: relative; overflo
 html[data-theme] .menu li:hover { background: color-mix(in srgb,var(--app-accent) 9%,transparent); color: var(--app-text); transform: translateX(3px); }
 html[data-theme] .menu li.active-item { color: var(--app-text); background: var(--app-surface-2); box-shadow: 0 10px 25px rgba(0,0,0,.08); }
 html[data-theme="dark"] .menu li.active-item { background: linear-gradient(90deg,rgba(184,255,101,.14),rgba(255,255,255,.035)); box-shadow: inset 3px 0 #b8ff65,0 12px 30px rgba(0,0,0,.2); }
-html[data-theme] .menu-icon { background: var(--app-surface); }
+html[data-theme] .menu-icon { background: #fff; }
 html[data-theme] .active-item .menu-icon { background: linear-gradient(135deg,var(--app-accent),var(--app-accent-2)); }
-html[data-theme="dark"] .active-item .menu-icon { background: var(--app-lime); box-shadow: 0 0 24px rgba(184,255,101,.15); }
+html[data-theme="dark"] .active-item .menu-icon { background: #434f34; box-shadow: 0 0 24px rgba(184,255,101,.15); }
 html[data-theme] .sidebar-footer:hover { background: var(--app-surface-2); color: var(--app-danger); }
 
 /* Plant analysis */
@@ -231,7 +231,12 @@ html[data-theme] ::-webkit-scrollbar-track { background:var(--app-bg); }
 @media(max-width:768px){
   html[data-theme="dark"] .dashboard-layout:before{inset:75px 0 0;background-size:42px 42px}
   html[data-theme] .chat-sessions-panel{background:var(--app-surface)}
-  html[data-theme="dark"] .login-card-box,html[data-theme="dark"] .signup-card{background:rgba(14,23,18,.86)}
+  html[data-theme] .login-card-box,
+  html[data-theme] .signup-card,
+  html[data-theme] .Reset-card {
+    background: transparent;
+    backdrop-filter: blur(3px);
+  }
 }
 
 @media(prefers-reduced-motion:reduce){html[data-theme] *{scroll-behavior:auto}}
