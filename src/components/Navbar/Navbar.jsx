@@ -227,17 +227,7 @@ export default function Navbar() {
   return (
     <nav className="navbar" dir={language === "ar" ? "rtl" : "ltr"} ref={navbarRef}>
       <div className="nav-logo">
-        <img className="nav-logo-light" src={language === "ar" ? arabicLogo : logo} alt="NABTA" />
-        <span className="nav-logo-dark" aria-label="NABTA">
-          {language === "ar" ? (
-            <>
-              <img src="/Logos.png" alt="" aria-hidden="true" />
-              <strong>نبتة</strong>
-            </>
-          ) : (
-            <img src={logo} alt="NABTA" />
-          )}
-        </span>
+        <img src={language === "ar" ? arabicLogo : logo} alt="NABTA" />
       </div>
 
       <ul className="nav-links">
