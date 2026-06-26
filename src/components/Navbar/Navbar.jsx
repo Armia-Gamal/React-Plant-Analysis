@@ -229,8 +229,14 @@ export default function Navbar() {
       <div className="nav-logo">
         <img className="nav-logo-light" src={language === "ar" ? arabicLogo : logo} alt="NABTA" />
         <span className="nav-logo-dark" aria-label="NABTA">
-          <img src="/Logos.png" alt="" aria-hidden="true" />
-          <strong>{language === "ar" ? "نبتة" : "NABTA"}</strong>
+          {language === "ar" ? (
+            <>
+              <img src="/Logos.png" alt="" aria-hidden="true" />
+              <strong>نبتة</strong>
+            </>
+          ) : (
+            <img src={logo} alt="NABTA" />
+          )}
         </span>
       </div>
 
