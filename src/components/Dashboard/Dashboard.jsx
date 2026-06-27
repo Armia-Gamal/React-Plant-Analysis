@@ -92,7 +92,6 @@ const text = {
     role: "User",
     unknownUser: "User",
     languageLabel: "Language",
-    notifications: "Notifications",
     theme: "Theme",
     on: "On",
     off: "Off",
@@ -152,7 +151,6 @@ export default function Dashboard() {
   const [newChatTrigger, setNewChatTrigger] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [authUser, setAuthUser] = useState(null);
   const [userProfile, setUserProfile] = useState({
     name: "",
@@ -567,15 +565,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          <button
-            type="button"
-            className={`nav-icon nav-icon-button ${notificationsEnabled ? "is-active" : ""}`}
-            onClick={() => setNotificationsEnabled((prev) => !prev)}
-            aria-label={t.notifications || "Notifications"}
-            title={t.notifications || "Notifications"}
-          >
-            <BellIcon />
-          </button>
+
           <button
             type="button"
             className="nav-icon nav-icon-button dashboard-theme-toggle"
@@ -623,19 +613,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                className={`mobile-profile-menu__row mobile-profile-menu__action ${notificationsEnabled ? "is-active" : ""}`}
-                onClick={() => setNotificationsEnabled((prev) => !prev)}
-              >
-                <span className="mobile-profile-menu__label">
-                  <BellIcon />
-                  <span>{t.notifications || "Notifications"}</span>
-                </span>
-                <span className="mobile-profile-menu__state">
-                  {notificationsEnabled ? (t.on || "On") : (t.off || "Off")}
-                </span>
-              </button>
+
 
               <button
                 type="button"

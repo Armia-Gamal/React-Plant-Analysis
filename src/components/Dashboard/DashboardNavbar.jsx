@@ -129,9 +129,7 @@ export default function DashboardNavbar({
             </button>
           </div>
 
-          <button type="button" className="dashboard-navbar__icon-button" aria-label={text.notifications}>
-            <BellIcon />
-          </button>
+
 
           <div className="dashboard-navbar__profile-card">
             <img src={displayAvatar} alt={displayName} className="dashboard-navbar__avatar" />

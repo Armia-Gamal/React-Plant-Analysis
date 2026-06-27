@@ -105,7 +105,6 @@ export default function Landing() {
               <div className="analysis-top"><span><ScanLine size={16} /> {t.scanComplete}</span><span className="live-dot" /></div>
               <div className="health-row"><div className="health-score">92<small>%</small></div><div><b>{t.health}</b><div className="meter"><i /></div></div></div>
               <div className="result-row"><span className="result-icon"><Leaf size={18} /></span><div><small>{t.confidence} · 96%</small><strong>{t.issue}</strong></div></div>
-              <button>{t.action} <ArrowRight size={15} /></button>
             </div>
             <div className="floating-chip chip-one"><Droplets size={16} /> Moisture 68%</div>
             <div className="floating-chip chip-two"><CloudSun size={16} /> Light optimal</div>
@@ -124,7 +123,7 @@ export default function Landing() {
 
       <section id="features" className="features-section section-pad"><div className="landing-container">
         <div className="section-heading reveal"><div className="section-tag">{t.featureTag}</div><h2>{t.featureTitle}</h2><p>{t.featureBody}</p></div>
-        <div className="feature-grid">{t.features.map(([title, body, icon], index) => { const Icon = icons[icon]; return <article className="feature-card reveal" key={title}><div className="feature-number">0{index + 1}</div><div className="feature-icon"><Icon /></div><h3>{title}</h3><p>{body}</p><span className="feature-link">Learn more <ArrowRight size={16} /></span></article>; })}</div>
+        <div className="feature-grid">{t.features.map(([title, body, icon], index) => { const Icon = icons[icon]; return <article className="feature-card reveal" key={title}><div className="feature-number">0{index + 1}</div><div className="feature-icon"><Icon /></div><h3>{title}</h3><p>{body}</p></article>; })}</div>
       </div></section>
 
       <section id="how" className="how-section section-pad"><div className="landing-container">
@@ -149,7 +148,7 @@ export default function Landing() {
               </div>
               <div className="console-status"><span><i /> SYSTEM: COLLABORATING</span><span>{t.devNote}</span></div>
             </div>
-            <div className="developer-roster">{members.map((member, index) => <button type="button" className={`developer-row ${activeMember === index ? "active" : ""}`} style={{ "--member-color": member.color }} onMouseEnter={() => setActiveMember(index)} onFocus={() => setActiveMember(index)} onClick={() => setActiveMember(index)} aria-label={`${t.openProfile}: ${member.name}`} key={member.name}><span className="roster-number">0{index + 1}</span><span className="roster-avatar">{member.code}</span><span className="roster-name">{member.name}</span><span className="roster-role">{t.teamRole}</span><ArrowRight /></button>)}</div>
+            <div className="developer-roster">{members.map((member, index) => <button type="button" className={`developer-row ${activeMember === index ? "active" : ""}`} style={{ "--member-color": member.color }} onMouseEnter={() => setActiveMember(index)} onFocus={() => setActiveMember(index)} onClick={() => setActiveMember(index)} aria-label={`${t.openProfile}: ${member.name}`} key={member.name}><span className="roster-number">0{index + 1}</span><span className="roster-avatar">{member.code}</span><span className="roster-name">{member.name}</span><span className="roster-role">{t.teamRole}</span></button>)}</div>
           </div>
           <div className="team-manifesto reveal"><Users size={24} /><span>{t.together}</span><div className="manifesto-line" /><span className="manifesto-count">07</span></div>
         </div>

@@ -269,3 +269,83 @@
     backdrop-filter: blur(6px);
   }
 }
+
+/* --- Dark Mode --- */
+[data-theme="dark"] .login-layout {
+  background-color: #0f172a; /* slate-900 */
+}
+
+[data-theme="dark"] .login-card-box {
+  background: #1e293b; /* slate-800 */
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+[data-theme="dark"] .login-card-box h2,
+[data-theme="dark"] .login-card-box .login-signup-link {
+  color: #f1f5f9; /* slate-100 */
+}
+
+[data-theme="dark"] .login-card-box p {
+  color: #94a3b8; /* slate-400 */
+}
+
+[data-theme="dark"] .login-card-box label {
+  color: #cbd5e1; /* slate-300 */
+}
+
+[data-theme="dark"] .login-card-box input,
+[data-theme="dark"] .login-password-field input {
+  background: #334155; /* slate-700 */
+  border-color: #475569; /* slate-600 */
+  color: #000000;
+}
+
+[data-theme="dark"] .login-password-field i {
+  color: #64748b; /* slate-500 */
+}
+
+[data-theme="dark"] .login-divider {
+  color: #64748b; /* slate-500 */
+}
+
+[data-theme="dark"] .login-divider::before,
+[data-theme="dark"] .login-divider::after {
+  border-color: #334155; /* slate-700 */
+}
+
+[data-theme="dark"] .login-google-btn {
+  background-color: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .login-google-btn:hover:not(:disabled) {
+  background-color: #475569;
+}
+
+@media (max-width: 768px) {
+  [data-theme="dark"] .login-card-box,
+  [data-theme="dark"] .signup-card,
+  [data-theme="dark"] .Reset-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(71, 85, 105, 0.5);
+    backdrop-filter: blur(8px);
+  }
+}
+
+@media (max-width: 600px) {
+  [data-theme="dark"] .login-layout::before {
+    background-image: url('../../assets/images/nig.png');
+    background-position: center bottom;
+    opacity: 1;
+  }
+}
+
+/* Dark mode autofill styles */
+[data-theme="dark"] .login-card-box input:-webkit-autofill,
+[data-theme="dark"] .login-card-box input:-webkit-autofill:hover,
+[data-theme="dark"] .login-card-box input:-webkit-autofill:focus,
+[data-theme="dark"] .login-card-box input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 40px #334155 inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+}
