@@ -392,7 +392,7 @@ export default function Irrigation() {
                 <strong>{decisionText}</strong>
                 {Number(result.water_amount_liters_per_m2) > 0 ? (
                   <p>
-                    {t.waterAmount}: <b>{result.water_amount_liters_per_m2} {t.millimeter}</b>
+                    {t.waterAmount}: <b>{(result.water_amount_liters_per_m2 / 60).toFixed(2)} {t.millimeter}</b>
                   </p>
                 ) : null}
                 {result.confidence_percentage ? (
