@@ -207,81 +207,81 @@ API calls:
 ### Authentication
 
 Login  
-![Login](../Nabta_Documentation/latex/assets/screenshots/login_page.png)
+![Login](./images/screenshots/login_page.png)
 
 Login Welcome Screen  
-![Login Welcome Screen](../Nabta_Documentation/latex/assets/screenshots/login_welcome_screen.png)
+![Login Welcome Screen](./images//screenshots/login_welcome_screen.png)
 
 Reset Password  
-![Reset Password](../Nabta_Documentation/latex/assets/screenshots/reset_password.png)
+![Reset Password](./images//screenshots/reset_password.png)
 
 ---
 
 ### Plant Analysis
 
 Upload Plant Image  
-![Plant Analysis Upload](../Nabta_Documentation/latex/assets/screenshots/plant_analysis_upload.png)
+![Plant Analysis Upload](./images//screenshots/plant_analysis_upload.png)
 
 Analysis Results  
-![Analysis Results](../Nabta_Documentation/latex/assets/screenshots/analysis_results.png)
+![Analysis Results](./images//screenshots/analysis_results.png)
 
 Disease Report  
-![Disease Report](../Nabta_Documentation/latex/assets/screenshots/disease_report.png)
+![Disease Report](./images//screenshots/disease_report.png)
 
 PDF Report  
-![PDF Report](../Nabta_Documentation/latex/assets/screenshots/pdf_report.png)
+![PDF Report](./images//screenshots/pdf_report.png)
 
 ---
 
 ### Dashboard
 
 Main Dashboard  
-![Main Dashboard](../Nabta_Documentation/latex/assets/screenshots/main_dashboard.png)
+![Main Dashboard](./images//screenshots/main_dashboard.png)
 
 Dashboard Overview  
-![Dashboard](../Nabta_Documentation/latex/assets/screenshots/dashboard.png)
+![Dashboard](./images//screenshots/dashboard.png)
 
 Analytics Dashboard  
-![Analytics Dashboard](../Nabta_Documentation/latex/assets/screenshots/analytics_dashboard.png)
+![Analytics Dashboard](./images//screenshots/analytics_dashboard.png)
 
 ---
 
 ### AI Assistant
 
 AI Assistant  
-![AI Assistant](../Nabta_Documentation/latex/assets/screenshots/ai_assistant.png)
+![AI Assistant](./images//screenshots/ai_assistant.png)
 
 AI Chat  
-![AI Chat](../Nabta_Documentation/latex/assets/screenshots/ai_chat.png)
+![AI Chat](./images//screenshots/ai_chat.png)
 
 AI Recommendations  
-![AI Recommendations](../Nabta_Documentation/latex/assets/screenshots/ai_recommendations.png)
+![AI Recommendations](./images//screenshots/ai_recommendations.png)
 
 ---
 
 ### AgriTech
 
 Crop Recommendation  
-![Crop Recommendation](../Nabta_Documentation/latex/assets/screenshots/crop_recommendation.png)
+![Crop Recommendation](./images//screenshots/crop_recommendation.png)
 
 Irrigation Management  
-![Irrigation Management](../Nabta_Documentation/latex/assets/screenshots/irrigation_management.png)
+![Irrigation Management](./images//screenshots/irrigation_management.png)
 
 ---
 
 ### User Profile
 
-![User Profile](../Nabta_Documentation/latex/assets/screenshots/user_profile.png)
+![User Profile](./images//screenshots/user_profile.png)
 
 ---
 
 ### History and Custom Data
 
 History  
-![History](../Nabta_Documentation/latex/assets/screenshots/history.png)
+![History](./images//screenshots/history.png)
 
 Custom Data Management  
-![Custom Data Management](../Nabta_Documentation/latex/assets/screenshots/custom_data_management.png)
+![Custom Data Management](./images//screenshots/custom_data_management.png)
 
 ---
 
