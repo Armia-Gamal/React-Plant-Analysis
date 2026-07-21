@@ -18,11 +18,6 @@
 
 ---
 
-## Live Demo
-
-[![Website](https://img.shields.io/badge/Visit-nabta--system.tech-black?style=for-the-badge&logo=vercel&logoColor=white)](https://nabta-system.tech)
-
----
 
 ## Project Repositories
 
