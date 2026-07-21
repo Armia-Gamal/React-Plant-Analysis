@@ -24,6 +24,16 @@
 
 ---
 
+## Project Repositories
+
+- [Armia-Gamal/React-Plant-Analysis](https://github.com/Armia-Gamal/React-Plant-Analysis)
+- [Armia-Gamal/YOLO-U-Net-CNN-Plant-Disease](https://github.com/Armia-Gamal/YOLO-U-Net-CNN-Plant-Disease)
+- [Armia-Gamal/Nabta-AI-Plant-Disease-API](https://github.com/Armia-Gamal/Nabta-AI-Plant-Disease-API)
+- [Armia-Gamal/nabta-backend-ml](https://github.com/Armia-Gamal/nabta-backend-ml)
+- [Armia-Gamal/nabta-documentation](https://github.com/Armia-Gamal/nabta-documentation)
+
+---
+
 ## Demo Preview
 
 ![Demo](./images/VideoProject.gif)
@@ -44,6 +54,8 @@ The platform enables users to upload plant images and receive detailed AI-driven
 - Disease classification using deep convolutional neural networks  
 - Segmentation of infected regions using U-Net architecture  
 - Visual explainability using Grad-CAM  
+- AgriTech crop recommendation based on soil type, NPK values, and live weather
+- Smart irrigation decision support using crop, soil, moisture, and weather data
 - Real-time inference and result visualization  
 - Persistent storage and analytics dashboard  
 
@@ -83,6 +95,72 @@ The assistant follows a structured pipeline to ensure secure, context-aware, and
 
 ---
 
+## AgriTech Module
+
+The frontend includes a dedicated AgriTech module for crop recommendation and irrigation management. This module connects to the deployed **NABTA AgriTech ML API**:
+
+```js
+const API_BASE = "https://armia-gamal-agritech-api.hf.space";
+```
+
+### Crop Recommendation
+
+The Crop Recommendation page helps users choose the most suitable crops based on:
+
+- Current city or detected location
+- Soil type
+- Nitrogen value (N)
+- Phosphorus value (P)
+- Potassium value (K)
+- Live weather data
+
+Frontend path:
+
+```text
+src/pages/dashboard/Agriculture/Crop-Recommendation/
+```
+
+API calls:
+
+- `GET /meta-data` to load supported soil options
+- `POST /weather` to resolve location weather
+- `POST /recommend-crop` to return the top 3 recommended crops
+
+### Irrigation Management
+
+The Irrigation page helps users decide whether a crop needs irrigation and estimates the required amount of water.
+
+It uses:
+
+- Crop type
+- Soil type
+- Current soil moisture
+- Live weather data
+- Soil-specific valid moisture ranges
+
+Frontend path:
+
+```text
+src/pages/dashboard/Agriculture/Irrigation/
+```
+
+API calls:
+
+- `GET /meta-data` to load crops, soils, and moisture ranges
+- `POST /weather` to fetch current weather using browser geolocation
+- `POST /predict-irrigation` to generate irrigation decision and water amount
+
+### AgriTech Workflow
+
+1. User opens Crop Recommendation or Irrigation page.
+2. Frontend loads supported crops, soils, and soil moisture ranges from the ML API.
+3. Browser geolocation is used to fetch live weather.
+4. User enters soil, crop, moisture, or NPK values.
+5. Frontend sends the analysis request to the AgriTech API.
+6. Results are displayed as cards, confidence scores, recommendations, and irrigation decisions.
+
+---
+
 ## Technology Stack
 
 ### Frontend
@@ -96,16 +174,20 @@ The assistant follows a structured pipeline to ensure secure, context-aware, and
 - FastAPI for API development  
 - Python for AI processing  
 - Docker for containerization  
+- AgriTech ML API for crop recommendation and irrigation prediction
 
 ### AI and Machine Learning
 - PyTorch  
 - TensorFlow / Keras  
 - OpenCV  
 - Albumentations  
+- Scikit-learn models for agricultural recommendation workflows
 
 ### Cloud and Services
 - Firebase (Authentication and Firestore database)  
 - Netlify for frontend deployment  
+- Hugging Face Spaces for AI backend deployment
+- WeatherAPI for live weather features
 
 ---
 
@@ -114,6 +196,9 @@ The assistant follows a structured pipeline to ensure secure, context-aware, and
 - Plant disease detection pipeline  
 - Classification with explainability (Grad-CAM)  
 - Segmentation of infected areas  
+- AgriTech crop recommendation using soil, NPK, and city weather
+- Irrigation management with moisture validation and water amount estimation
+- Live weather fetching through geolocation
 - AI assistant powered by LLM and RAG  
 - Historical tracking and analytics  
 - User profile management  
@@ -127,43 +212,81 @@ The assistant follows a structured pipeline to ensure secure, context-aware, and
 ### Authentication
 
 Login  
-![Login](./images/login.png)
+![Login](../Nabta_Documentation/latex/assets/screenshots/login_page.png)
 
-Signup  
-![Signup](./images/Signup.png)
+Login Welcome Screen  
+![Login Welcome Screen](../Nabta_Documentation/latex/assets/screenshots/login_welcome_screen.png)
 
 Reset Password  
-![Reset](./images/Reset.png)
+![Reset Password](../Nabta_Documentation/latex/assets/screenshots/reset_password.png)
 
 ---
 
 ### Plant Analysis
 
-![Plant Analysis](./images/plant.png)
+Upload Plant Image  
+![Plant Analysis Upload](../Nabta_Documentation/latex/assets/screenshots/plant_analysis_upload.png)
+
+Analysis Results  
+![Analysis Results](../Nabta_Documentation/latex/assets/screenshots/analysis_results.png)
+
+Disease Report  
+![Disease Report](../Nabta_Documentation/latex/assets/screenshots/disease_report.png)
+
+PDF Report  
+![PDF Report](../Nabta_Documentation/latex/assets/screenshots/pdf_report.png)
 
 ---
 
 ### Dashboard
 
-![Dashboard](./images/Dash.png)
+Main Dashboard  
+![Main Dashboard](../Nabta_Documentation/latex/assets/screenshots/main_dashboard.png)
+
+Dashboard Overview  
+![Dashboard](../Nabta_Documentation/latex/assets/screenshots/dashboard.png)
+
+Analytics Dashboard  
+![Analytics Dashboard](../Nabta_Documentation/latex/assets/screenshots/analytics_dashboard.png)
 
 ---
 
 ### AI Assistant
 
-![Chatbot](./images/Chatbot.png)
+AI Assistant  
+![AI Assistant](../Nabta_Documentation/latex/assets/screenshots/ai_assistant.png)
+
+AI Chat  
+![AI Chat](../Nabta_Documentation/latex/assets/screenshots/ai_chat.png)
+
+AI Recommendations  
+![AI Recommendations](../Nabta_Documentation/latex/assets/screenshots/ai_recommendations.png)
+
+---
+
+### AgriTech
+
+Crop Recommendation  
+![Crop Recommendation](../Nabta_Documentation/latex/assets/screenshots/crop_recommendation.png)
+
+Irrigation Management  
+![Irrigation Management](../Nabta_Documentation/latex/assets/screenshots/irrigation_management.png)
 
 ---
 
 ### User Profile
 
-![Profile](./images/Prof.png)
+![User Profile](../Nabta_Documentation/latex/assets/screenshots/user_profile.png)
 
 ---
 
-### Premium System
+### History and Custom Data
 
-![Premium](./images/Pro.png)
+History  
+![History](../Nabta_Documentation/latex/assets/screenshots/history.png)
+
+Custom Data Management  
+![Custom Data Management](../Nabta_Documentation/latex/assets/screenshots/custom_data_management.png)
 
 ---
 
@@ -296,6 +419,15 @@ src/
 │
 ├── pages/
 │   ├── dashboard/
+│   │   ├── Agriculture/
+│   │   │   ├── Crop-Recommendation/
+│   │   │   │   ├── Crop-Recommendation.jsx # Crop recommendation page
+│   │   │   │   └── Crop-Recommendation.css # Crop recommendation styling
+│   │   │   │
+│   │   │   └── Irrigation/
+│   │   │       ├── Irrigation.jsx           # Irrigation management page
+│   │   │       └── Irrigation.css           # Irrigation page styling
+│   │   │
 │   │   ├── AIAssistant/
 │   │   │   ├── AIAssistant.jsx   # Chat interface (Cohere LLM + RAG integration)
 │   │   │   └── AIAssistant.css   # Styling for chat UI
@@ -438,12 +570,23 @@ Illustrates the physical deployment architecture of the system, including server
 
 ## System Workflow
 
+### Plant Disease Analysis
+
 1. User uploads a plant image  
 2. YOLOv8 detects plant regions  
 3. CNN classifies disease type  
 4. U-Net generates segmentation mask  
 5. Grad-CAM provides visual explanation  
 6. Results are stored and displayed in dashboard  
+
+### AgriTech Recommendation and Irrigation
+
+1. User opens the AgriTech page from the dashboard
+2. Frontend loads crops, soils, and moisture ranges from the ML API
+3. User location is used to fetch live weather data
+4. User submits crop, soil, moisture, or NPK values
+5. ML API returns crop recommendations or irrigation decisions
+6. Results are displayed inside the frontend dashboard
 
 ---
 
