@@ -519,7 +519,7 @@ These diagrams are organized from conceptual (Use Case) to procedural (Activity)
 
 Represents the interaction between users, the system, and external services.
 
-[![Use Case Diagram](./images/usecase.png)](./images/usecase.png)
+[![Use Case Diagram](./images/use_case_diagram.png)](./images/use_case_diagram.png)
 
 ---
 
@@ -527,7 +527,7 @@ Represents the interaction between users, the system, and external services.
 
 Illustrates the complete workflow of the system, from user actions to AI-driven processing and result generation.
 
-[![Activity Diagram](./images/activity.jpeg)](./images/activity.jpeg)
+[![Activity Diagram](./images/activity_diagram.png)](./images/activity_diagram.png)
 
 ---
 
@@ -535,7 +535,7 @@ Illustrates the complete workflow of the system, from user actions to AI-driven 
 
 Illustrates the communication flow between frontend, backend, AI models, and external services during the plant disease analysis process.
 
-[![Sequence Diagram](./images/Sequence.jpeg)](./images/Sequence.jpeg)
+[![Sequence Diagram](./images/sequence_diagram.png)](./images/sequence_diagram.png)
 
 ---
 
@@ -543,7 +543,7 @@ Illustrates the communication flow between frontend, backend, AI models, and ext
 
 Describes the internal structure of the system, including core components, relationships, and data flow.
 
-[![Class Diagram](./images/class.png)](./images/class.png)
+[![Class Diagram](./images/class_diagram.png)](./images/class_diagram.png)
 
 ---
 
@@ -551,7 +551,7 @@ Describes the internal structure of the system, including core components, relat
 
 Represents the high-level software architecture and interaction between system modules such as frontend, backend, AI models, database, and external APIs.
 
-[![Component Diagram](./images/Component.png)](./images/Component.png)
+[![Component Diagram](./images/component_diagram.jpeg)](./images/component_diagram.jpeg)
 
 ---
 
@@ -559,7 +559,31 @@ Represents the high-level software architecture and interaction between system m
 
 Illustrates the physical deployment architecture of the system, including servers, cloud services, APIs, databases, and deployed AI models.
 
-[![Deployment Diagram](./images/Deployment.jpeg)](./images/Deployment.jpeg)
+[![Deployment Diagram](./images/deployment_diagram.jpeg)](./images/deployment_diagram.jpeg)
+
+---
+
+### System Workflow Diagram
+
+Shows the end-to-end system flow from user input through AI processing, storage, and frontend results.
+
+[![System Workflow Diagram](./images/system_workflow.png)](./images/system_workflow.png)
+
+---
+
+### Entity Relationship Diagram
+
+Describes the main database entities and relationships used by the system.
+
+[![Entity Relationship Diagram](./images/entity_relationship_diagram.png)](./images/entity_relationship_diagram.png)
+
+---
+
+### End-to-End Plant Disease Pipeline
+
+Illustrates the complete plant disease pipeline across detection, classification, segmentation, explainability, and reporting.
+
+[![End-to-End Plant Disease Pipeline](./images/end_to_end_plant_disease_pipeline.png)](./images/end_to_end_plant_disease_pipeline.png)
 
 ---
 
